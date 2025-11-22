@@ -1,50 +1,53 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { validateWebhookEvent } from '../lib/validator';
-import { fetchRequestDetails, getServiceMetadataURI } from '../lib/blockchain';
-import { fetchAPIResponseData } from '../lib/supabase';
-import { fetchServiceMetadata } from '../lib/metadata';
-import { makeDisputeDecision } from '../lib/llm';
-import { resolveDisputeOnChain } from '../lib/resolver';
-import { WebhookEvent, DisputeContext, RequestStatus } from '../types';
+import { validateWebhookEvent } from './validator';
+import { fetchRequestDetails, getServiceMetadataURI } from './blockchain';
+import { fetchAPIResponseData } from './supabase';
+import { fetchServiceMetadata } from './metadata';
+import { makeDisputeDecision } from './llm';
+import { resolveDisputeOnChain } from './resolver';
+import { WebhookEvent, DisputeContext, RequestStatus } from './types';
 import dotenv from 'dotenv';
 
 // Load environment variables
-dotenv.config();
+dotenv.config({ path: __dirname + '/../../.env' });
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  console.log('Dispute agent webhook received:', new Date().toISOString());
+export interface WebhookResult {
+  success: boolean;
+  requestId?: string;
+  decision?: {
+    refund: boolean;
+    reason: string;
+  };
+  transactionHash?: string;
+  error?: string;
+  message?: string;
+}
 
-  // Only accept POST requests
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+/**
+ * Main webhook handler logic extracted for reusability
+ */
+export async function handleDisputeWebhook(webhookEvent: WebhookEvent): Promise<WebhookResult> {
+  console.log('Processing dispute webhook:', new Date().toISOString());
 
   try {
     // 1. Validate webhook event
     console.log('Validating webhook event...');
-    const webhookEvent = req.body as WebhookEvent;
-
-    // Verify webhook secret if configured
-    const webhookSecret = process.env.WEBHOOK_SECRET;
-    if (webhookSecret) {
-      const signature = req.headers['x-webhook-signature'];
-      if (!signature || signature !== webhookSecret) {
-        console.error('Invalid webhook signature');
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-    }
-
-    // Validate event structure and parameters
     const validation = await validateWebhookEvent(webhookEvent);
+
     if (!validation.valid) {
       console.error('Invalid webhook event:', validation.error);
-      return res.status(400).json({ error: validation.error });
+      return {
+        success: false,
+        error: validation.error
+      };
     }
 
     // Only process DisputeEscalated events
     if (webhookEvent.event !== 'DisputeEscalated') {
       console.log(`Ignoring event type: ${webhookEvent.event}`);
-      return res.status(200).json({ message: 'Event type not handled' });
+      return {
+        success: true,
+        message: 'Event type not handled'
+      };
     }
 
     const { requestId } = webhookEvent.args;
@@ -59,7 +62,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Verify request is in escalated state
     if (serviceRequest.status !== RequestStatus.DisputeEscalated) {
       console.error(`Request ${requestId} is not in escalated state`);
-      return res.status(400).json({ error: 'Request not in escalated state' });
+      return {
+        success: false,
+        error: 'Request not in escalated state'
+      };
     }
 
     // 3. Fetch API response data from Supabase
@@ -68,7 +74,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (!apiResponseData) {
       console.error(`No API response data found for hash: ${serviceRequest.apiResponseHash}`);
-      return res.status(404).json({ error: 'API response data not found' });
+      return {
+        success: false,
+        error: 'API response data not found'
+      };
     }
 
     // 4. Fetch service metadata
@@ -110,37 +119,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // For now, we'll proceed but log the low confidence
     }
 
-    // 8. Execute on-chain resolution
-    console.log('Executing on-chain dispute resolution...');
-    const txHash = await resolveDisputeOnChain(
-      contractAddress,
-      requestId,
-      decision.refund
-    );
+    // 8. Execute on-chain resolution (optional - can be disabled for testing)
+    let transactionHash: string | undefined;
 
-    console.log(`Dispute resolved on-chain. Transaction hash: ${txHash}`);
-
-    // 9. Log resolution to database (optional - for tracking)
-    // You could store this in Supabase for audit trail
-    const resolution = {
-      requestId,
-      contractAddress,
-      decision,
-      transactionHash: txHash,
-      resolvedAt: new Date().toISOString(),
-      agentAddress: process.env.AGENT_ADDRESS
-    };
+    if (process.env.SKIP_BLOCKCHAIN_CALLS === 'true') {
+      console.log('Skipping blockchain call (TEST_MODE)');
+      transactionHash = '0x' + '0'.repeat(64); // Mock transaction hash
+    } else {
+      console.log('Executing on-chain dispute resolution...');
+      transactionHash = await resolveDisputeOnChain(
+        contractAddress,
+        requestId,
+        decision.refund
+      );
+      console.log(`Dispute resolved on-chain. Transaction hash: ${transactionHash}`);
+    }
 
     // Return success response
-    return res.status(200).json({
+    return {
       success: true,
       requestId,
       decision: {
         refund: decision.refund,
         reason: decision.reason
       },
-      transactionHash: txHash
-    });
+      transactionHash
+    };
 
   } catch (error) {
     console.error('Error processing dispute:', error);
@@ -153,9 +157,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    return res.status(500).json({
+    return {
+      success: false,
       error: 'Failed to process dispute',
       message: error instanceof Error ? error.message : 'Unknown error'
-    });
+    };
   }
 }

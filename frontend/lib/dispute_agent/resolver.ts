@@ -23,7 +23,7 @@ export async function resolveDisputeOnChain(
 
     // Set up provider and wallet
     const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
-    const wallet = new ethers.Wallet(process.env.PRIVATE_KEY!, provider);
+    const wallet = new ethers.Wallet(process.env.AGENT_PRIVATE_KEY!, provider);
 
     // Get the agent's address for logging
     console.log(`Agent address: ${wallet.address}`);
@@ -96,7 +96,7 @@ export async function simulateResolution(
 ): Promise<boolean> {
   try {
     const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
-    const wallet = new ethers.Wallet(process.env.PRIVATE_KEY!, provider);
+    const wallet = new ethers.Wallet(process.env.AGENT_PRIVATE_KEY!, provider);
 
     const escrowContract = new ethers.Contract(
       contractAddress,

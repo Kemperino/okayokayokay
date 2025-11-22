@@ -1,0 +1,11 @@
+{
+  "event": "DisputeEscalated",
+  "contractAddress": "0x1234567890123456789012345678901234567890",
+  "transactionHash": "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+  "blockNumber": 123456,
+  "timestamp": 1700000000,
+  "args": {
+    "requestId": "0x1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  "network": "base-sepolia"
+}

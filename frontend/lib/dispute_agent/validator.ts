@@ -1,4 +1,4 @@
-import { WebhookEvent } from '../types';
+import { WebhookEvent } from './types';
 import { ethers } from 'ethers';
 
 export interface ValidationResult {
@@ -118,7 +118,7 @@ export async function validateAgentRole(): Promise<boolean> {
     }
 
     // Get agent's address from private key
-    const wallet = new ethers.Wallet(process.env.PRIVATE_KEY!, provider);
+    const wallet = new ethers.Wallet(process.env.AGENT_PRIVATE_KEY!, provider);
     const agentAddress = wallet.address;
 
     // Factory contract ABI
