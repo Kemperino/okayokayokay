@@ -4,27 +4,12 @@ pragma solidity ^0.8.20;
 import "forge-std/Test.sol";
 import "../src/DisputeEscrow.sol";
 import "../src/DisputeEscrowFactory.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
-// Mock USDC token for testing
-contract MockUSDC is ERC20 {
-    constructor() ERC20("Mock USDC", "USDC") {
-        _mint(msg.sender, 1000000 * 10**6); // 1M USDC
-    }
-
-    function mint(address to, uint256 amount) external {
-        _mint(to, amount);
-    }
-
-    function decimals() public pure override returns (uint8) {
-        return 6;
-    }
-}
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract DisputeEscrowTest is Test {
     DisputeEscrowFactory public factory;
     DisputeEscrow public escrow;
-    MockUSDC public usdc;
+    IERC20 public usdc;
 
     address admin = address(0x1);
     address operator = address(0x2);
@@ -51,8 +36,13 @@ contract DisputeEscrowTest is Test {
     event DisputeCancelled(bytes32 indexed requestId);
 
     function setUp() public {
-        // Deploy USDC mock
-        usdc = new MockUSDC();
+        // For testing, we use a deterministic address for USDC
+        // In real tests, you would use the actual USDC address on the testnet
+        address usdcAddress = address(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
+
+        // Deploy the USDC token code to this address for testing
+        vm.etch(usdcAddress, hex"00");
+        usdc = IERC20(usdcAddress);
 
         // Deploy factory
         vm.prank(admin);
@@ -69,12 +59,12 @@ contract DisputeEscrowTest is Test {
         address escrowAddress = factory.registerService(servicePublicKey, metadataURI);
         escrow = DisputeEscrow(escrowAddress);
 
-        // Fund facilitator with USDC
-        usdc.mint(facilitator, 10000 * 10**6);
+        // Fund facilitator with USDC using forge's deal
+        deal(address(usdc), facilitator, 10000 * 10**6);
 
         // Fund buyers with some USDC
-        usdc.mint(buyer1, 1000 * 10**6);
-        usdc.mint(buyer2, 1000 * 10**6);
+        deal(address(usdc), buyer1, 1000 * 10**6);
+        deal(address(usdc), buyer2, 1000 * 10**6);
     }
 
     // ============ Deployment Tests ============
