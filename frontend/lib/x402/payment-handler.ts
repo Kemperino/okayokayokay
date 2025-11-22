@@ -47,10 +47,10 @@ export async function makeX402RequestForSession(
       try {
         const paymentResponse = decodeXPaymentResponse(paymentResponseHeader);
         paymentDetails = {
-          txHash: paymentResponse?.transaction || paymentResponse?.txHash || 'unknown',
-          amount: paymentResponse?.amount || paymentResponse?.value || 'unknown',
-          to: paymentResponse?.to || paymentResponse?.recipient || 'unknown',
-          nonce: paymentResponse?.nonce || undefined,
+          txHash: paymentResponse?.transaction || 'unknown',
+          amount: 'unknown', // Amount not available in payment response
+          to: 'unknown', // To address not directly available in payment response
+          nonce: undefined,
         };
       } catch (err) {
         console.warn('[x402] Failed to decode payment response:', err);

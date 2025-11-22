@@ -5,6 +5,7 @@ import {
 } from '@/lib/queries/resources.server';
 import { makeX402RequestForSession } from '@/lib/x402/payment-handler';
 import { getSessionWalletAddress } from '@/lib/cdp/session-wallet-operations';
+import { fetchWellKnown } from '@/lib/x402/well-known-fetcher';
 
 /**
  * x402 Resource Proxy with Anonymous CDP Wallet
@@ -52,6 +53,9 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Fetch .well-known/x402 data for seller description (cached)
+    const wellKnownData = await fetchWellKnown(url.toString());
+
     // Make x402 request using session's CDP wallet
     const result = await makeX402RequestForSession(url.toString(), sessionId);
 
@@ -65,7 +69,7 @@ export async function POST(req: NextRequest) {
         output_data: null,
         seller_address: result.paymentDetails?.to || 'unknown',
         user_address: walletAddress,
-        seller_description: resource.well_known_data || null,
+        seller_description: wellKnownData || resource.well_known_data || null,
         tx_hash: null,
         resource_url: url.toString(),
         status: 'failed',
@@ -89,7 +93,7 @@ export async function POST(req: NextRequest) {
       output_data: result.data,
       seller_address: merchantPublicKey || resource.payment_address || result.paymentDetails?.to || 'unknown',
       user_address: walletAddress,
-      seller_description: resource.well_known_data || null,
+      seller_description: wellKnownData || resource.well_known_data || null,
       tx_hash: result.paymentDetails?.txHash || null,
       resource_url: url.toString(),
       status: 'completed',

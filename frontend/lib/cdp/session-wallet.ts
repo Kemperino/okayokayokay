@@ -1,6 +1,6 @@
 import { cdpClient } from './client';
 import { createServerClient } from '@/lib/supabase/server';
-import type { EvmAccount } from '@coinbase/cdp-sdk';
+import type { EvmServerAccount } from '@coinbase/cdp-sdk';
 
 export interface SessionWallet {
   id: string;
@@ -41,7 +41,7 @@ function generateCdpAccountName(sessionId: string): string {
  */
 export async function getOrCreateAnonymousWallet(sessionId: string): Promise<{
   wallet: SessionWallet;
-  account: EvmAccount;
+  account: EvmServerAccount;
 }> {
   const supabase = await createServerClient();
 
@@ -122,7 +122,7 @@ export async function getSessionWallet(sessionId: string): Promise<SessionWallet
 /**
  * Get CDP account for an anonymous session
  */
-export async function getAnonymousCdpAccount(sessionId: string): Promise<EvmAccount> {
+export async function getAnonymousCdpAccount(sessionId: string): Promise<EvmServerAccount> {
   const { account } = await getOrCreateAnonymousWallet(sessionId);
   return account;
 }

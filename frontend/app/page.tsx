@@ -11,18 +11,27 @@ export default function Home() {
         </p>
 
         {/* Quick Links */}
-        <div className="mb-8 flex gap-4">
+        <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link
             href="/wallet"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-center"
           >
-            View Wallet
+            <div className="font-semibold">Wallet</div>
+            <div className="text-xs opacity-90">Manage funds</div>
           </Link>
           <Link
             href="/resources"
-            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
+            className="px-4 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition text-center"
           >
-            Browse Resources
+            <div className="font-semibold">Resources</div>
+            <div className="text-xs opacity-90">Browse & test</div>
+          </Link>
+          <Link
+            href="/disputes"
+            className="px-4 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition text-center"
+          >
+            <div className="font-semibold">My Disputes</div>
+            <div className="text-xs opacity-90">Track status</div>
           </Link>
         </div>
 
