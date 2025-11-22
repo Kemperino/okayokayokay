@@ -1,7 +1,6 @@
-import { wrapFetchWithPayment } from 'x402-fetch';
-import { createWalletClient, http } from 'viem';
-import { privateKeyToAccount } from 'viem/accounts';
-import { base } from 'viem/chains';
+import { wrapFetchWithPayment, decodeXPaymentResponse } from 'x402-fetch';
+import { toAccount } from 'viem/accounts';
+import { getAnonymousCdpAccount } from '@/lib/cdp/session-wallet';
 
 export interface X402PaymentResult {
   success: boolean;
@@ -11,37 +10,27 @@ export interface X402PaymentResult {
     txHash: string;
     amount: string;
     to: string;
+    nonce?: string;
   };
 }
 
 /**
- * Make an x402 request using a private key
+ * Make an x402 request using an anonymous session's CDP wallet
+ * Uses CDP account directly without exporting private key
  */
-export async function makeX402Request(
+export async function makeX402RequestForSession(
   url: string,
-  privateKey: string,
+  sessionId: string,
   options?: RequestInit
 ): Promise<X402PaymentResult> {
   try {
-    // Create viem wallet client from private key
-    const account = privateKeyToAccount(privateKey as `0x${string}`);
-    const viemWalletClient = createWalletClient({
-      account,
-      chain: base,
-      transport: http(),
-    });
-
-    console.log(`[x402] Making request to ${url} with wallet ${account.address}`);
-
-    // Wrap fetch with x402 payment capability
-    const x402Fetch = wrapFetchWithPayment(fetch, { walletClient: viemWalletClient });
-
-    // Make the request - x402-fetch handles 402 responses automatically
+    const cdpAccount = await getAnonymousCdpAccount(sessionId);
+    const signer = toAccount(cdpAccount);
+    const x402Fetch = wrapFetchWithPayment(fetch, signer);
     const response = await x402Fetch(url, options);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`[x402] Request failed: ${response.status} ${errorText}`);
       return {
         success: false,
         error: `Request failed with status ${response.status}: ${errorText}`,
@@ -49,30 +38,35 @@ export async function makeX402Request(
     }
 
     const data = await response.json();
-    console.log('[x402] Request successful');
 
-    // Extract payment details if available from response headers
-    const paymentTxHash = response.headers.get('x-payment-tx');
-    const paymentAmount = response.headers.get('x-payment-amount');
-    const paymentTo = response.headers.get('x-payment-to');
+    // Extract payment details from x-payment-response header
+    const paymentResponseHeader = response.headers.get('x-payment-response');
+    let paymentDetails;
+
+    if (paymentResponseHeader) {
+      try {
+        const paymentResponse = decodeXPaymentResponse(paymentResponseHeader);
+        paymentDetails = {
+          txHash: paymentResponse?.transaction || paymentResponse?.txHash || 'unknown',
+          amount: paymentResponse?.amount || paymentResponse?.value || 'unknown',
+          to: paymentResponse?.to || paymentResponse?.recipient || 'unknown',
+          nonce: paymentResponse?.nonce || undefined,
+        };
+      } catch (err) {
+        console.warn('[x402] Failed to decode payment response:', err);
+      }
+    }
 
     return {
       success: true,
       data,
-      paymentDetails:
-        paymentTxHash && paymentAmount && paymentTo
-          ? {
-              txHash: paymentTxHash,
-              amount: paymentAmount,
-              to: paymentTo,
-            }
-          : undefined,
+      paymentDetails,
     };
   } catch (err) {
-    console.error('[x402] Payment handler error:', err);
     return {
       success: false,
-      error: err instanceof Error ? err.message : 'Unknown error occurred',
+      error: err instanceof Error ? err.message : 'Failed to get session wallet',
     };
   }
 }
+

@@ -50,37 +50,44 @@ export function RealtimeEventsFeed() {
   }, []);
 
   if (loading) {
-    return <div className="p-8">Loading events...</div>;
+    return <div className="p-6">Loading events...</div>;
   }
 
   if (events.length === 0) {
-    return <div className="p-8">No events yet. Waiting for transfers...</div>;
+    return (
+      <div className="p-6 text-gray-500">
+        No payment events yet. Waiting for transfers...
+      </div>
+    );
   }
 
   return (
-    <div className="p-8">
-      <h2 className="text-xl font-bold mb-4">
-        Live Transfer Events ({events.length})
-      </h2>
-
-      <div className="space-y-3">
-        {events.map((event) => (
-          <div
-            key={event.id}
-            className="border rounded p-3 bg-white shadow-sm hover:shadow transition-shadow"
-          >
-            <div className="flex justify-between items-start mb-2">
-              <div className="font-mono text-sm">
-                {event.from_address?.slice(0, 10)}... → {event.to_address?.slice(0, 10)}...
-              </div>
-              <div className="text-sm font-semibold">{event.amount}</div>
+    <div className="space-y-3">
+      {events.map((event) => (
+        <div
+          key={event.id}
+          className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow"
+        >
+          <div className="flex justify-between items-start mb-2">
+            <div className="font-mono text-xs">
+              {event.from_address?.slice(0, 10)}...
+              <span className="mx-1 text-gray-400">→</span>
+              {event.to_address?.slice(0, 10)}...
             </div>
-            <div className="text-xs text-gray-500">
-              Block {event.block_number} • {new Date(event.created_at).toLocaleTimeString()}
+            <div className="text-sm font-semibold text-green-600">
+              {event.amount}
             </div>
           </div>
-        ))}
-      </div>
+          {event.nonce && (
+            <div className="text-xs text-gray-500 mb-1">
+              Nonce: {event.nonce.slice(0, 16)}...
+            </div>
+          )}
+          <div className="text-xs text-gray-400">
+            Block {event.block_number} • {new Date(event.created_at).toLocaleTimeString()}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

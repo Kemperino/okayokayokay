@@ -241,6 +241,9 @@ alter table alchemy_events enable row level security;
 alter table resources enable row level security;
 alter table resource_requests enable row level security;
 
+-- Enable realtime for resource_requests table
+alter publication supabase_realtime add table resource_requests;
+
 -- Transactions policies
 create policy "Users can view their own transactions"
   on transactions for select

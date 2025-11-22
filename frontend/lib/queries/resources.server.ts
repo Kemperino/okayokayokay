@@ -20,17 +20,14 @@ export interface Resource {
 }
 
 export interface ResourceRequest {
-  id: string;
-  resource_id: string;
-  request_path: string;
-  request_params: any | null;
-  request_headers: any | null;
-  response_data: any | null;
-  response_status: number | null;
+  request_id: string;
+  input_data: any;
+  output_data: any | null;
+  seller_address: string;
+  user_address: string;
+  seller_description: any | null;
   tx_hash: string | null;
-  payment_amount: string | null;
-  payment_to_address: string | null;
-  nonce: string | null;
+  resource_url: string | null;
   status: string;
   error_message: string | null;
   created_at: string;
@@ -97,35 +94,54 @@ export async function updateResourceWellKnown(id: string, wellKnownData: any) {
 /**
  * Create a resource request log
  */
-export async function createResourceRequest(request: Omit<ResourceRequest, 'id' | 'created_at' | 'completed_at'>) {
-  return supabase
+export async function createResourceRequest(request: Omit<ResourceRequest, 'created_at' | 'completed_at'>) {
+  const result = await supabase
     .from('resource_requests')
     .insert(request)
     .select()
     .single();
+
+  if (result.error) {
+    console.error('[DB] Insert failed:', result.error);
+    throw new Error(`Database insert failed: ${result.error.message}`);
+  }
+
+  return result;
 }
 
 /**
- * Update a resource request
+ * Update a resource request by request_id
  */
-export async function updateResourceRequest(id: string, updates: Partial<ResourceRequest>) {
+export async function updateResourceRequest(requestId: string, updates: Partial<ResourceRequest>) {
   return supabase
     .from('resource_requests')
     .update({
       ...updates,
       completed_at: updates.status === 'completed' || updates.status === 'failed' ? new Date().toISOString() : undefined,
     })
-    .eq('id', id);
+    .eq('request_id', requestId);
 }
 
 /**
- * Get resource requests by resource ID
+ * Get resource requests by seller address
  */
-export async function getResourceRequests(resourceId: string, limit = 100) {
+export async function getResourceRequestsBySeller(sellerAddress: string, limit = 100) {
   return supabase
     .from('resource_requests')
     .select('*')
-    .eq('resource_id', resourceId)
+    .eq('seller_address', sellerAddress)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+}
+
+/**
+ * Get resource requests by user address
+ */
+export async function getResourceRequestsByUser(userAddress: string, limit = 100) {
+  return supabase
+    .from('resource_requests')
+    .select('*')
+    .eq('user_address', userAddress)
     .order('created_at', { ascending: false })
     .limit(limit);
 }
@@ -136,13 +152,18 @@ export async function getResourceRequests(resourceId: string, limit = 100) {
 export async function getRecentResourceRequests(limit = 50) {
   return supabase
     .from('resource_requests')
-    .select(`
-      *,
-      resources (
-        name,
-        base_url
-      )
-    `)
+    .select('*')
     .order('created_at', { ascending: false })
     .limit(limit);
+}
+
+/**
+ * Get a resource request by request_id
+ */
+export async function getResourceRequestById(requestId: string) {
+  return supabase
+    .from('resource_requests')
+    .select('*')
+    .eq('request_id', requestId)
+    .single();
 }

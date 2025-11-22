@@ -2,7 +2,6 @@ import { getActiveResources, getRecentResourceRequests } from '@/lib/queries/res
 import AddResourceForm from '@/components/AddResourceForm';
 import ResourceList from '@/components/ResourceList';
 import ResourceRequestHistory from '@/components/ResourceRequestHistory';
-import ServerWalletInfo from '@/components/ServerWalletInfo';
 
 export default async function ResourcesPage() {
   const [resourcesResult, requestsResult] = await Promise.all([
@@ -18,13 +17,8 @@ export default async function ResourcesPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">x402 Resources</h1>
         <p className="text-gray-600">
-          Browse and test x402-powered resources. Your server wallet handles payments automatically.
+          Browse and test x402-powered resources. Your CDP server wallet handles payments automatically.
         </p>
-      </div>
-
-      {/* Server Wallet Info */}
-      <div className="mb-8">
-        <ServerWalletInfo />
       </div>
 
       {/* Add Resource Form */}

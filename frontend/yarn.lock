@@ -32,7 +32,7 @@
     viem "^2.31.7"
     zustand "5.0.3"
 
-"@coinbase/cdp-sdk@^1.0.0":
+"@coinbase/cdp-sdk@^1.0.0", "@coinbase/cdp-sdk@^1.38.6":
   version "1.38.6"
   resolved "https://registry.yarnpkg.com/@coinbase/cdp-sdk/-/cdp-sdk-1.38.6.tgz#41e1829ff8209e5626436759a70dd455bc2f17eb"
   integrity sha512-l9gGGZqhCryuD3nfqB4Y+i8kfBtsnPJoKB5jxx5lKgXhVJw7/BPhgscKkVhP81115Srq3bFegD1IBwUkJ0JFMw==
@@ -6642,7 +6642,7 @@ viem@2.x, viem@>=2.29.0, viem@^2.1.1, viem@^2.21.26, viem@^2.27.2, viem@^2.31.7:
     ox "0.9.6"
     ws "8.18.3"
 
-wagmi@^2.15.6, wagmi@^2.16:
+wagmi@^2.15.6:
   version "2.19.5"
   resolved "https://registry.yarnpkg.com/wagmi/-/wagmi-2.19.5.tgz#72d1561f95be6cb50e13283397b4768eb6ffb9ac"
   integrity sha512-RQUfKMv6U+EcSNNGiPbdkDtJwtuFxZWLmvDiQmjjBgkuPulUwDJsKhi7gjynzJdsx2yDqhHCXkKsbbfbIsHfcQ==

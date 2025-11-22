@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { getSessionId } from '@/lib/session';
+import { getOrCreateSessionId } from '@/lib/session-manager';
 
 interface Resource {
   id: string;
@@ -39,7 +39,7 @@ export default function ResourceTester({ resource }: { resource: Resource }) {
   };
 
   const handleTest = async () => {
-    const sessionId = getSessionId();
+    const sessionId = getOrCreateSessionId();
 
     setLoading(true);
     setError(null);
@@ -145,11 +145,11 @@ export default function ResourceTester({ resource }: { resource: Resource }) {
             )}
           </div>
 
-          {result.serverWallet && (
+          {result.sessionWallet && (
             <div className="bg-blue-50 border border-blue-200 p-4 rounded text-sm">
-              <div className="font-medium text-blue-900 mb-1">Paid by Server Wallet</div>
-              <code className="text-xs bg-white px-2 py-1 rounded">
-                {result.serverWallet}
+              <div className="font-medium text-blue-900 mb-1">Paid by Your Session Wallet</div>
+              <code className="text-xs bg-white px-2 py-1 rounded break-all">
+                {result.sessionWallet}
               </code>
             </div>
           )}

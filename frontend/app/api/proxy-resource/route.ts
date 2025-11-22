@@ -3,21 +3,22 @@ import {
   getResourceById,
   createResourceRequest,
 } from '@/lib/queries/resources.server';
-import { getOrCreateServerWallet } from '@/lib/server-wallet/manager';
-import { makeX402Request } from '@/lib/x402/payment-handler';
+import { makeX402RequestForSession } from '@/lib/x402/payment-handler';
+import { getSessionWalletAddress } from '@/lib/cdp/session-wallet-operations';
 
 /**
- * x402 Resource Proxy with Server Wallet
+ * x402 Resource Proxy with Anonymous CDP Wallet
  *
  * POST /api/proxy-resource
  * Body: {
  *   resourceId: string,
  *   path: string,
  *   params?: Record<string, string>,
- *   sessionId: string (anonymous session ID)
+ *   sessionId: string
  * }
  *
- * This endpoint uses the session's server wallet to make x402 payments automatically.
+ * This endpoint uses the session's CDP wallet to make x402 payments automatically.
+ * No authentication required.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -30,8 +31,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get or create server wallet for this session
-    const serverWallet = await getOrCreateServerWallet(sessionId);
+    // Get session wallet address
+    const walletAddress = await getSessionWalletAddress(sessionId);
 
     // Get resource details
     const { data: resource, error: resourceError } = await getResourceById(resourceId);
@@ -51,28 +52,22 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    console.log(`[Proxy] Making x402 request to ${url.toString()}`);
-    console.log(`[Proxy] Using server wallet: ${serverWallet.wallet_address}`);
-
-    // Make x402 request using private key
-    const result = await makeX402Request(url.toString(), serverWallet.private_key);
+    // Make x402 request using session's CDP wallet
+    const result = await makeX402RequestForSession(url.toString(), sessionId);
 
     if (!result.success) {
-      console.error(`[Proxy] Request failed:`, result.error);
+      const requestId = `failed-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+      const inputData = { path, params: params || null };
 
-      // Log the failed request
       await createResourceRequest({
-        resource_id: resourceId,
-        user_address: sessionId, // Using session ID as user identifier
-        request_path: path,
-        request_params: params || null,
-        request_headers: null,
-        response_data: null,
-        response_status: 500,
+        request_id: requestId,
+        input_data: inputData,
+        output_data: null,
+        seller_address: result.paymentDetails?.to || 'unknown',
+        user_address: walletAddress,
+        seller_description: resource.well_known_data || null,
         tx_hash: null,
-        payment_amount: null,
-        payment_to_address: null,
-        nonce: null,
+        resource_url: url.toString(),
         status: 'failed',
         error_message: result.error || 'Unknown error',
       });
@@ -83,25 +78,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log(`[Proxy] Request successful`);
-    if (result.paymentDetails) {
-      console.log(`[Proxy] Payment made: ${result.paymentDetails.amount} to ${result.paymentDetails.to}`);
-      console.log(`[Proxy] Transaction: ${result.paymentDetails.txHash}`);
-    }
+    // Extract seller address from the response data (merchantPublicKey)
+    const merchantPublicKey = result.data?.merchantPublicKey;
+    const requestId = result.data?.requestId || result.paymentDetails?.txHash || `req-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    const inputData = { path, params: params || null };
 
-    // Log the successful request
     await createResourceRequest({
-      resource_id: resourceId,
-      user_address: sessionId, // Using session ID as user identifier
-      request_path: path,
-      request_params: params || null,
-      request_headers: null,
-      response_data: result.data,
-      response_status: 200,
+      request_id: requestId,
+      input_data: inputData,
+      output_data: result.data,
+      seller_address: merchantPublicKey || resource.payment_address || result.paymentDetails?.to || 'unknown',
+      user_address: walletAddress,
+      seller_description: resource.well_known_data || null,
       tx_hash: result.paymentDetails?.txHash || null,
-      payment_amount: result.paymentDetails?.amount || null,
-      payment_to_address: result.paymentDetails?.to || null,
-      nonce: null,
+      resource_url: url.toString(),
       status: 'completed',
       error_message: null,
     });
@@ -110,7 +100,7 @@ export async function POST(req: NextRequest) {
       success: true,
       data: result.data,
       paymentDetails: result.paymentDetails,
-      serverWallet: serverWallet.wallet_address,
+      sessionWallet: walletAddress,
     });
   } catch (err) {
     console.error('Error in proxy-resource API:', err);
