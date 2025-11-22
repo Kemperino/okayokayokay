@@ -50,7 +50,7 @@ export async function validateWebhookEvent(event: WebhookEvent): Promise<Validat
     }
 
     // Validate network if specified
-    const supportedNetworks = ['base-sepolia', 'base', 'ethereum-sepolia', 'ethereum'];
+    const supportedNetworks = ['base-sepolia', 'base', 'base-mainnet', 'ethereum-sepolia', 'ethereum'];
     if (event.network && !supportedNetworks.includes(event.network)) {
       return { valid: false, error: `Unsupported network: ${event.network}` };
     }
