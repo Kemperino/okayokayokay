@@ -23,6 +23,8 @@ contract DisputeEscrow {
           uint256 amount;
           uint256 escrowedAt;      // Timestamp when escrowed
           uint256 disputeDeadline;  // Timestamp for dispute filing
+          uint256 disputeOpenedAt;  // Timestamp when dispute opened
+          uint256 sellerResponseDeadline; // Deadline for seller to respond to dispute
           RequestStatus status;
           bytes32 apiResponseHash;  // Set by operator
           address disputeAgent;      // Assigned if escalated
@@ -48,6 +50,7 @@ contract DisputeEscrow {
     // Events
     event EscrowConfirmed(bytes32 indexed requestId, bytes32 apiResponseHash);
     event EscrowReleased(bytes32 indexed requestId, uint256 amount);
+    event DisputeOpened(bytes32 indexed requestId, address indexed buyer);
 
     // Modifiers
     modifier onlyOperator() {
@@ -111,6 +114,8 @@ contract DisputeEscrow {
             amount: amount,
             escrowedAt: block.timestamp,
             disputeDeadline: block.timestamp + escrowPeriod,
+            disputeOpenedAt: 0,
+            sellerResponseDeadline: 0,
             status: RequestStatus.Escrowed,
             apiResponseHash: apiResponseHash,
             disputeAgent: address(0),
@@ -136,5 +141,53 @@ contract DisputeEscrow {
         IERC20(usdc).transfer(serviceProvider, req.amount);
 
         emit EscrowReleased(requestId, req.amount);
+    }
+
+    /**
+     * @dev Buyer opens a dispute within the dispute window
+     * @param requestId Unique identifier for the request
+     */
+    function openDispute(bytes32 requestId) external {
+        ServiceRequest storage req = requests[requestId];
+        require(msg.sender == req.buyer, "Not buyer");
+        require(req.status == RequestStatus.Escrowed, "Not in escrow");
+        require(block.timestamp < req.disputeDeadline, "Dispute window closed");
+
+        req.status = RequestStatus.DisputeOpened;
+        req.disputeOpenedAt = block.timestamp;
+        req.sellerResponseDeadline = block.timestamp + disputePeriod;
+
+        emit DisputeOpened(requestId, req.buyer);
+    }
+
+    // ============ View Functions ============
+
+    /**
+     * @dev Get unallocated balance (funds available for new requests)
+     * @return Available balance not allocated to any request
+     */
+    function getUnallocatedBalance() external view returns (uint256) {
+        uint256 contractBalance = IERC20(usdc).balanceOf(address(this));
+        return contractBalance - allocatedBalance;
+    }
+
+    /**
+     * @dev Get the status of a request
+     * @param requestId Unique identifier for the request
+     * @return Current status of the request
+     */
+    function getRequestStatus(bytes32 requestId) external view returns (RequestStatus) {
+        return requests[requestId].status;
+    }
+
+    /**
+     * @dev Check if seller can still respond to dispute
+     * @param requestId Unique identifier for the request
+     * @return Whether seller can respond
+     */
+    function canSellerRespond(bytes32 requestId) external view returns (bool) {
+        ServiceRequest memory req = requests[requestId];
+        return req.status == RequestStatus.DisputeOpened &&
+               block.timestamp <= req.sellerResponseDeadline;
     }
 }
