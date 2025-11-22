@@ -60,4 +60,13 @@ Dispute resolution platform for x402 payments with multi-layer arbitration.
 
 **Package Manager**: This project uses **yarn** for dependency management. Always use `yarn` instead of `npm`.
 
+**Frontend Stack**:
+- Next.js for the frontend application
+- Supabase for database and authentication (use Supabase client where needed)
+- Coinbase CDP Server Wallets v2 for wallet management (see https://docs.cdp.coinbase.com/server-wallets/v2/introduction/quickstart)
+  - Check CDP docs when implementing wallet functionality
+
+**Backend Services**:
+- Alchemy webhook server function that populates the database with blockchain events
+
 **Documentation**: Do not create markdown files for everything. Only create documentation when explicitly requested or when absolutely necessary for critical setup/configuration.
