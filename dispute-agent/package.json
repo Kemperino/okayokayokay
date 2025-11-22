@@ -4,6 +4,7 @@
   "description": "Automated dispute resolution agent for x402 payment disputes",
   "main": "index.js",
   "scripts": {
+    "build": "tsc",
     "dev": "vercel dev",
     "deploy": "vercel --prod",
     "test": "jest"
