@@ -6,6 +6,7 @@ const DISPUTE_ESCROW_ABI = [
   'function requests(bytes32) view returns (address buyer, uint256 amount, uint256 escrowedAt, uint256 nextDeadline, uint8 status, bytes32 apiResponseHash, address disputeAgent, bool buyerRefunded, bool sellerRejected)',
   'function getRequestStatus(bytes32) view returns (uint8)',
   'function serviceProvider() view returns (address)',
+  'function serviceMetadataURI() view returns (string)',
   'function resolveDispute(bytes32 requestId, bool refundBuyer) external'
 ];
 
@@ -102,4 +103,24 @@ export function formatAmount(amount: bigint, decimals: number = 6): string {
  */
 export function parseAmount(amount: string, decimals: number = 6): bigint {
   return ethers.parseUnits(amount, decimals);
+}
+
+/**
+ * Gets the service metadata URI from a DisputeEscrow contract
+ */
+export async function getServiceMetadataURI(contractAddress: string): Promise<string> {
+  try {
+    const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+    const escrowContract = new ethers.Contract(
+      contractAddress,
+      DISPUTE_ESCROW_ABI,
+      provider
+    );
+
+    const metadataURI = await escrowContract.serviceMetadataURI();
+    return metadataURI;
+  } catch (error) {
+    console.error('Error fetching service metadata URI:', error);
+    throw new Error(`Failed to fetch service metadata URI: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
