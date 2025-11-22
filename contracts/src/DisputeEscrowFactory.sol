@@ -21,6 +21,9 @@ contract DisputeEscrowFactory is AccessControl {
       constructor(address _usdc, address _admin) {
           usdc = _usdc;
 
+          require(_admin != address(0), "Admin address cannot be zero");
+          require(_usdc != address(0), "USDC address cannot be zero");
+
           // Grant both DEFAULT_ADMIN_ROLE and ADMIN_ROLE to the admin
           _grantRole(DEFAULT_ADMIN_ROLE, _admin);
           _grantRole(ADMIN_ROLE, _admin);
