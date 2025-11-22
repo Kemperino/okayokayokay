@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Sidebar } from "@/components/Sidebar";
+import { MobileHeader, DesktopSidebar } from "@/components/Sidebar";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,8 +16,9 @@ export default function RootLayout({
     <html lang="en" className="h-full">
       <body className="h-full">
         <div className="max-w-7xl mx-auto w-full h-full">
-          <div className="flex h-full">
-            <Sidebar />
+          <MobileHeader />
+          <div className="md:flex h-full">
+            <DesktopSidebar />
             <main className="flex-1 overflow-y-auto">{children}</main>
           </div>
         </div>
