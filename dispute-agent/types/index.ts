@@ -46,6 +46,7 @@ export interface DisputeContext {
   contractAddress: string;
   serviceRequest: ServiceRequest;
   apiResponseData: APIResponseData;
+  serviceMetadata?: any; // Service description from metadata URI
   disputeHistory?: any[]; // Previous dispute events if any
 }
 
