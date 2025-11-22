@@ -50,20 +50,12 @@ contract DisputeEscrowFactory is AccessControl {
           grantRole(OPERATOR_ROLE, operator);
       }
 
-      function setFacilitator(address facilitator) external onlyRole(ADMIN_ROLE) {
-          grantRole(FACILITATOR_ROLE, facilitator);
-      }
-
       function setDisputeAgent(address disputeAgent) external onlyRole(ADMIN_ROLE) {
           grantRole(DISPUTE_AGENT_ROLE, disputeAgent);
       }
 
       function revokeOperator(address operator) external onlyRole(ADMIN_ROLE) {
           revokeRole(OPERATOR_ROLE, operator);
-      }
-
-      function revokeFacilitator(address facilitator) external onlyRole(ADMIN_ROLE) {
-          revokeRole(FACILITATOR_ROLE, facilitator);
       }
 
       function revokeDisputeAgent(address disputeAgent) external onlyRole(ADMIN_ROLE) {
@@ -77,10 +69,6 @@ contract DisputeEscrowFactory is AccessControl {
 
       function isOperator(address account) external view returns (bool) {
           return hasRole(OPERATOR_ROLE, account);
-      }
-
-      function isFacilitator(address account) external view returns (bool) {
-          return hasRole(FACILITATOR_ROLE, account);
       }
 
       function isDisputeAgent(address account) external view returns (bool) {
