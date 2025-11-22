@@ -11,10 +11,17 @@ if [ -f .env ]; then
     source .env
 fi
 
-RPC_URL="https://sepolia.base.org"
+# Default to mainnet, override with NETWORK env var
+if [ "$NETWORK" = "sepolia" ]; then
+    RPC_URL="https://sepolia.base.org"
+    NETWORK_NAME="Base Sepolia"
+else
+    RPC_URL="https://mainnet.base.org"
+    NETWORK_NAME="Base Mainnet"
+fi
 
 echo ""
-echo -e "${BLUE}=== Contract Query Tool ===${NC}"
+echo -e "${BLUE}=== Contract Query Tool (${NETWORK_NAME}) ===${NC}"
 echo ""
 
 # Function to decode request status

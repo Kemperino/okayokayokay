@@ -12,8 +12,14 @@ if [ -f .env ]; then
     source .env
 fi
 
-# Base RPC URL
-RPC_URL="https://sepolia.base.org"
+# Base RPC URL - Default to mainnet, override with NETWORK env var
+if [ "$NETWORK" = "sepolia" ]; then
+    RPC_URL="https://sepolia.base.org"
+    echo -e "${YELLOW}Using Base Sepolia network${NC}"
+else
+    RPC_URL="https://mainnet.base.org"
+    echo -e "${GREEN}Using Base Mainnet${NC}"
+fi
 
 # Function to display menu
 show_menu() {

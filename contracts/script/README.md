@@ -11,7 +11,7 @@ Generates a new wallet for deployment or testing.
 ```
 
 ### `deploy.sh`
-Deploys the factory and mock USDC contracts to Base Sepolia.
+Deploys the factory contract to Base Sepolia (requires existing USDC address).
 ```bash
 ./script/deploy.sh
 ```
@@ -24,7 +24,6 @@ Interactive menu-driven script for all backend operations:
 - Set roles (operator, dispute agent)
 - Manage escrow (fund, confirm, release)
 - Handle disputes (open, respond, escalate, resolve)
-- Mint test USDC
 
 ```bash
 ./script/backend-operations.sh
@@ -74,7 +73,9 @@ Automated test that demonstrates complete flow:
 Required in `.env`:
 ```
 PRIVATE_KEY=0x...
-USDC_ADDRESS=0x036CbD53842c5426634e7929541eC2318f3dCF7e  # Base Sepolia USDC
+# Base Mainnet USDC: 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913
+# Base Sepolia USDC: 0x036CbD53842c5426634e7929541eC2318f3dCF7e
+USDC_ADDRESS=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913
 FACTORY_ADDRESS=0x...  # Set after deployment
 ```
 
@@ -87,12 +88,43 @@ DISPUTE_AGENT_ADDRESS=0x...
 
 ## Common Operations
 
+### Network Selection
+By default, scripts use Base Mainnet. To use Base Sepolia testnet:
+```bash
+# For deployment
+./script/deploy.sh sepolia
+
+# For operations scripts
+NETWORK=sepolia ./script/backend-operations.sh
+NETWORK=sepolia ./script/query-contracts.sh
+```
+
+### Register a Dispute Agent
+```bash
+NEW_DISPUTE_AGENT_ADDRESS=0x... \
+ADMIN_PRIVATE_KEY=0x... \
+FACTORY_ADDRESS=0x... \
+forge script script/ManageRoles.s.sol:SetDisputeAgentScript \
+    --rpc-url https://mainnet.base.org \
+    --broadcast
+```
+
+### Set Operator
+```bash
+NEW_OPERATOR_ADDRESS=0x... \
+ADMIN_PRIVATE_KEY=0x... \
+FACTORY_ADDRESS=0x... \
+forge script script/ManageRoles.s.sol:SetOperatorScript \
+    --rpc-url https://mainnet.base.org \
+    --broadcast
+```
+
 ### Register a New Service
 ```bash
 SERVICE_PUBLIC_KEY=0x... \
 SERVICE_METADATA_URI="ipfs://..." \
 forge script script/RegisterService.s.sol:RegisterServiceScript \
-    --rpc-url https://sepolia.base.org \
+    --rpc-url https://mainnet.base.org \
     --broadcast
 ```
 
@@ -105,7 +137,7 @@ AMOUNT=1000000 \
 API_RESPONSE_HASH=0x... \
 OPERATOR_PRIVATE_KEY=0x... \
 forge script script/EscrowOperations.s.sol:ConfirmEscrowScript \
-    --rpc-url https://sepolia.base.org \
+    --rpc-url https://mainnet.base.org \
     --broadcast
 ```
 
@@ -114,7 +146,7 @@ forge script script/EscrowOperations.s.sol:ConfirmEscrowScript \
 cast call <ESCROW_ADDRESS> \
     "getRequestStatus(bytes32)(uint8)" \
     <REQUEST_ID> \
-    --rpc-url https://sepolia.base.org
+    --rpc-url https://mainnet.base.org
 ```
 
 ## Request ID Generation

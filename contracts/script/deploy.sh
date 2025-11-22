@@ -61,6 +61,7 @@ if [ -z "$USDC_ADDRESS" ]; then
     echo -e "${RED}Error: USDC_ADDRESS not set in .env!${NC}"
     echo ""
     echo "Set the USDC address in your .env file."
+    echo "For Base Mainnet, use: 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
     echo "For Base Sepolia, use: 0x036CbD53842c5426634e7929541eC2318f3dCF7e"
     echo ""
     exit 1

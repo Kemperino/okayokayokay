@@ -5,9 +5,11 @@ libs = ["lib"]
 solc = "0.8.20"
 
 [rpc_endpoints]
+base = "https://mainnet.base.org"
 base_sepolia = "https://sepolia.base.org"
 
 [etherscan]
+base = { key = "${BASESCAN_API_KEY}", url = "https://api.basescan.org/api" }
 base_sepolia = { key = "${BASESCAN_API_KEY}", url = "https://api-sepolia.basescan.org/api" }
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
