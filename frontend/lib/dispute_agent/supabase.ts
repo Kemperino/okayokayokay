@@ -1,11 +1,22 @@
-import { createClient } from '@supabase/supabase-js';
-import { APIResponseData } from '../types';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { APIResponseData } from './types';
 
-// Initialize Supabase client
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY!;
+// Lazy initialize Supabase client
+let supabase: SupabaseClient | null = null;
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+function getSupabaseClient(): SupabaseClient {
+  if (!supabase) {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Supabase configuration missing');
+    }
+
+    supabase = createClient(supabaseUrl, supabaseServiceKey);
+  }
+  return supabase;
+}
 
 /**
  * Fetches API response data from Supabase using the response hash
@@ -17,7 +28,7 @@ export async function fetchAPIResponseData(
     console.log(`Fetching API response data for hash: ${apiResponseHash}`);
 
     // Query the api_responses table
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('api_responses')
       .select('*')
       .eq('response_hash', apiResponseHash)
@@ -64,7 +75,7 @@ export async function storeDisputeResolution(
   agentAddress: string
 ): Promise<void> {
   try {
-    const { error } = await supabase
+    const { error } = await getSupabaseClient()
       .from('dispute_resolutions')
       .insert({
         request_id: requestId,
@@ -93,7 +104,7 @@ export async function fetchDisputeHistory(
   requestId: string
 ): Promise<any[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('dispute_events')
       .select('*')
       .eq('request_id', requestId)
@@ -118,7 +129,7 @@ export async function fetchTransactionDetails(
   requestId: string
 ): Promise<any | null> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('transactions')
       .select('*')
       .eq('request_id', requestId)
