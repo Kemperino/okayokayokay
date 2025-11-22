@@ -4,26 +4,27 @@ pragma solidity ^0.8.20;
 import "forge-std/Test.sol";
 import "../src/DisputeEscrowFactory.sol";
 import "../src/DisputeEscrow.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-// Mock USDC token for testing
-contract MockUSDC is ERC20 {
-    constructor() ERC20("Mock USDC", "USDC") {
-        _mint(msg.sender, 1000000 * 10**6); // 1M USDC
-    }
-
-    function mint(address to, uint256 amount) external {
-        _mint(to, amount);
+// Simple test token for testing
+contract TestERC20 is ERC20 {
+    constructor() ERC20("Test USDC", "USDC") {
+        _mint(msg.sender, 1000000 * 10**6); // Mint 1M USDC (6 decimals)
     }
 
     function decimals() public pure override returns (uint8) {
         return 6;
     }
+
+    function mint(address to, uint256 amount) public {
+        _mint(to, amount);
+    }
 }
 
 contract DisputeEscrowFactoryTest is Test {
     DisputeEscrowFactory public factory;
-    MockUSDC public usdc;
+    IERC20 public usdc;
 
     address admin = address(0x1);
     address operator = address(0x2);
@@ -43,12 +44,14 @@ contract DisputeEscrowFactoryTest is Test {
     event ServiceRegistered(address indexed service, address escrowContract, bytes publicKey);
 
     function setUp() public {
-        // Deploy USDC mock
-        usdc = new MockUSDC();
+        // Deploy a test ERC20 token to simulate USDC
+        // Using Foundry's built-in test token
+        address usdcAddress = address(new TestERC20());
+        usdc = IERC20(usdcAddress);
 
         // Deploy factory as admin
         vm.prank(admin);
-        factory = new DisputeEscrowFactory(address(usdc), admin);
+        factory = new DisputeEscrowFactory(usdcAddress, admin);
     }
 
     // ============ Deployment Tests ============
@@ -303,7 +306,7 @@ contract DisputeEscrowFactoryTest is Test {
         DisputeEscrow escrow = DisputeEscrow(escrowAddress);
 
         // Fund the escrow
-        usdc.mint(facilitator, 1000 * 10**6);
+        TestERC20(address(usdc)).mint(facilitator, 1000 * 10**6);
         vm.prank(facilitator);
         usdc.transfer(escrowAddress, 100 * 10**6);
 
@@ -342,7 +345,7 @@ contract DisputeEscrowFactoryTest is Test {
         address escrow2 = factory.registerService(servicePublicKey2, metadataURI2);
 
         // Fund both escrows
-        usdc.mint(facilitator, 1000 * 10**6);
+        TestERC20(address(usdc)).mint(facilitator, 1000 * 10**6);
         vm.startPrank(facilitator);
         usdc.transfer(escrow1, 100 * 10**6);
         usdc.transfer(escrow2, 100 * 10**6);
@@ -376,7 +379,7 @@ contract DisputeEscrowFactoryTest is Test {
         DisputeEscrow escrow = DisputeEscrow(escrowAddress);
 
         // Fund escrow
-        usdc.mint(facilitator, 1000 * 10**6);
+        TestERC20(address(usdc)).mint(facilitator, 1000 * 10**6);
         vm.prank(facilitator);
         usdc.transfer(escrowAddress, 100 * 10**6);
 
