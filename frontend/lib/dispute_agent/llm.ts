@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { DisputeContext, LLMDecision } from '../types';
+import { DisputeContext, LLMDecision } from './types';
 import { formatAmount } from './blockchain';
 import { formatMetadataForPrompt } from './metadata';
 
@@ -12,18 +12,19 @@ const openai = new OpenAI({
 const DEFAULT_SYSTEM_PROMPT = `You are an impartial dispute resolution agent for a decentralized payment platform. Your role is to analyze disputes between buyers and service providers regarding API service delivery.
 
 When evaluating disputes, consider:
-1. Whether the service provider delivered what was promised
-2. Whether the API response data matches the expected service quality
-3. Whether there were technical errors or service failures
-4. Whether the buyer's complaint is reasonable and justified
+1. Whether the service provider delivered what was requested in the input data
+2. Whether the output data appropriately responds to and fulfills the input data request
+3. Whether there were technical errors, service failures, or mismatches between input and output
+4. Whether the buyer's complaint is reasonable and justified based on the input-output relationship
 5. The severity and impact of any issues identified
+6. Whether the service performed as described in its metadata
 
 You must respond with a JSON object containing:
 - "refund": boolean (true if buyer should be refunded, false if payment should go to seller)
 - "reason": string (a brief explanation of your decision, max 200 characters)
 - "confidence": number (0-1 scale indicating your confidence in the decision)
 
-Be fair and objective. Look for clear evidence of service failure or success. If the evidence is ambiguous, lean towards the party that appears to have acted in good faith.`;
+Be fair and objective. Look for clear evidence of service failure or success. Pay special attention to whether the output data satisfies the requirements specified in the input data. If the evidence is ambiguous, lean towards the party that appears to have acted in good faith.`;
 
 /**
  * Makes a dispute decision using the LLM
@@ -89,7 +90,7 @@ export async function makeDisputeDecision(context: DisputeContext): Promise<LLMD
  * Prepares the user prompt with dispute context
  */
 function prepareUserPrompt(context: DisputeContext): string {
-  const { serviceRequest, apiResponseData, serviceMetadata } = context;
+  const { serviceRequest, resourceRequestData, serviceMetadata } = context;
 
   // Format the amount for readability
   const amount = formatAmount(serviceRequest.amount);
@@ -104,20 +105,20 @@ DISPUTE DETAILS:
 Request ID: ${context.requestId}
 Buyer Address: ${serviceRequest.buyer}
 Amount: ${amount} USDC
-Service Provider: ${apiResponseData.service_provider}
-Timestamp: ${apiResponseData.timestamp}
+Service Provider: ${resourceRequestData.service_provider || 'N/A'}
+Timestamp: ${resourceRequestData.timestamp || 'N/A'}
 
 SERVICE INFORMATION:
 ====================
 ${metadataSection}
 
-SERVICE REQUEST DATA:
-=====================
-${JSON.stringify(apiResponseData.request_data, null, 2)}
+USER INPUT DATA (What the user requested):
+===========================================
+${JSON.stringify(resourceRequestData.input_data, null, 2)}
 
-API RESPONSE DATA:
-==================
-${JSON.stringify(apiResponseData.response_data, null, 2)}
+SERVICE OUTPUT DATA (What the service returned):
+================================================
+${JSON.stringify(resourceRequestData.output_data, null, 2)}
 
 DISPUTE STATUS:
 ===============
@@ -127,9 +128,10 @@ DISPUTE STATUS:
 
 Please analyze the above information and determine whether the buyer should receive a refund or the payment should go to the service provider. Consider:
 1. Whether the service was delivered as described in the service metadata
-2. Whether the API response data indicates successful service delivery
-3. Whether any failures or errors justify a refund
-4. Whether the service met the expectations set by its description
+2. Whether the output data appropriately responds to the user's input data
+3. Whether the service output indicates successful service delivery
+4. Whether any failures, errors, or mismatches between input and output justify a refund
+5. Whether the service met the expectations set by its description and the user's request
 
 Provide your decision in the required JSON format.`;
 

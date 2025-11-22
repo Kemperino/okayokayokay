@@ -1,6 +1,6 @@
 import { validateWebhookEvent } from './validator';
 import { fetchRequestDetails, getServiceMetadataURI } from './blockchain';
-import { fetchAPIResponseData } from './supabase';
+import { fetchResourceRequestData } from './supabase';
 import { fetchServiceMetadata } from './metadata';
 import { makeDisputeDecision } from './llm';
 import { resolveDisputeOnChain } from './resolver';
@@ -68,15 +68,15 @@ export async function handleDisputeWebhook(webhookEvent: WebhookEvent): Promise<
       };
     }
 
-    // 3. Fetch API response data from Supabase
-    console.log('Fetching API response data from Supabase...');
-    const apiResponseData = await fetchAPIResponseData(serviceRequest.apiResponseHash);
+    // 3. Fetch resource request data from Supabase using request ID
+    console.log('Fetching resource request data from Supabase...');
+    const resourceRequestData = await fetchResourceRequestData(requestId);
 
-    if (!apiResponseData) {
-      console.error(`No API response data found for hash: ${serviceRequest.apiResponseHash}`);
+    if (!resourceRequestData) {
+      console.error(`No resource request data found for request ID: ${requestId}`);
       return {
         success: false,
-        error: 'API response data not found'
+        error: 'Resource request data not found'
       };
     }
 
@@ -101,7 +101,7 @@ export async function handleDisputeWebhook(webhookEvent: WebhookEvent): Promise<
       requestId,
       contractAddress,
       serviceRequest,
-      apiResponseData,
+      resourceRequestData,
       serviceMetadata
     };
 

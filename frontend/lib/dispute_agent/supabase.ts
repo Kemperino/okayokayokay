@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { APIResponseData } from './types';
+import { ResourceRequestData } from './types';
 
 // Lazy initialize Supabase client
 let supabase: SupabaseClient | null = null;
@@ -19,19 +19,20 @@ function getSupabaseClient(): SupabaseClient {
 }
 
 /**
- * Fetches API response data from Supabase using the response hash
+ * Fetches resource request data from Supabase using the request ID
+ * We now query by request_id directly instead of response_hash
  */
-export async function fetchAPIResponseData(
-  apiResponseHash: string
-): Promise<APIResponseData | null> {
+export async function fetchResourceRequestData(
+  requestId: string
+): Promise<ResourceRequestData | null> {
   try {
-    console.log(`Fetching API response data for hash: ${apiResponseHash}`);
+    console.log(`Fetching resource request data for request ID: ${requestId}`);
 
-    // Query the api_responses table
+    // Query the resource_requests table
     const { data, error } = await getSupabaseClient()
-      .from('api_responses')
+      .from('resource_requests')
       .select('*')
-      .eq('response_hash', apiResponseHash)
+      .eq('request_id', requestId)
       .single();
 
     if (error) {
@@ -40,27 +41,27 @@ export async function fetchAPIResponseData(
     }
 
     if (!data) {
-      console.log('No data found for response hash');
+      console.log('No data found for request ID');
       return null;
     }
 
     // Transform the data to match our type
-    const apiResponseData: APIResponseData = {
+    const resourceRequestData: ResourceRequestData = {
       id: data.id,
       request_id: data.request_id,
+      input_data: data.input_data,
+      output_data: data.output_data,
       response_hash: data.response_hash,
-      request_data: data.request_data,
-      response_data: data.response_data,
       timestamp: data.timestamp,
       service_provider: data.service_provider,
       buyer_address: data.buyer_address,
       amount: data.amount
     };
 
-    return apiResponseData;
+    return resourceRequestData;
   } catch (error) {
-    console.error('Error fetching API response data:', error);
-    throw new Error(`Failed to fetch API response data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    console.error('Error fetching resource request data:', error);
+    throw new Error(`Failed to fetch resource request data: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 

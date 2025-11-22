@@ -23,16 +23,16 @@ export interface ServiceRequest {
   sellerRejected: boolean;
 }
 
-export interface APIResponseData {
-  id: string;
+export interface ResourceRequestData {
+  id?: string;
   request_id: string;
-  response_hash: string;
-  request_data: any;
-  response_data: any;
-  timestamp: string;
-  service_provider: string;
-  buyer_address: string;
-  amount: number;
+  input_data: any;  // User provided input when calling the resource
+  output_data: any; // Server API response to the user
+  response_hash?: string;
+  timestamp?: string;
+  service_provider?: string;
+  buyer_address?: string;
+  amount?: number;
 }
 
 export interface LLMDecision {
@@ -45,7 +45,7 @@ export interface DisputeContext {
   requestId: string;
   contractAddress: string;
   serviceRequest: ServiceRequest;
-  apiResponseData: APIResponseData;
+  resourceRequestData: ResourceRequestData;
   serviceMetadata?: any; // Service description from metadata URI
   disputeHistory?: any[]; // Previous dispute events if any
 }
