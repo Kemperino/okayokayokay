@@ -137,16 +137,41 @@ contract DisputeEscrow {
         // Can release if:
         // 1. Status is Escrowed and dispute deadline passed
         // 2. Status is DisputeOpened, seller rejected, and escalation deadline passed
+        // 3. Status is DisputeOpened, seller didn't respond, and reasonable time passed for buyer to escalate
         if (req.status == RequestStatus.Escrowed) {
             require(block.timestamp >= req.nextDeadline, "Still in dispute window");
-        } else if (req.status == RequestStatus.DisputeOpened && req.sellerRejected) {
-            require(block.timestamp >= req.nextDeadline, "Still in escalation window");
+        } else if (req.status == RequestStatus.DisputeOpened) {
+            if (req.sellerRejected) {
+                // Seller rejected, check escalation deadline
+                require(block.timestamp >= req.nextDeadline, "Still in escalation window");
+            } else {
+                // Seller didn't respond, give buyer reasonable time to escalate (same as BUYER_ESCALATION_PERIOD)
+                require(block.timestamp >= req.nextDeadline + BUYER_ESCALATION_PERIOD, "Buyer can still escalate");
+            }
         } else {
             revert("Cannot release funds");
         }
 
         allocatedBalance -= req.amount;
         req.status = RequestStatus.EscrowReleased;
+
+        // Transfer funds to service provider
+        IERC20(usdc).transfer(serviceProvider, req.amount);
+
+        emit EscrowReleased(requestId, req.amount);
+    }
+
+    /**
+     * @dev Buyer can release funds early if satisfied with service
+     * @param requestId Unique identifier for the request
+     */
+    function earlyRelease(bytes32 requestId) external {
+        ServiceRequest storage req = requests[requestId];
+        require(msg.sender == req.buyer, "Not buyer");
+        require(req.status == RequestStatus.Escrowed, "Not in escrow");
+
+        req.status = RequestStatus.EscrowReleased;
+        allocatedBalance -= req.amount;
 
         // Transfer funds to service provider
         IERC20(usdc).transfer(serviceProvider, req.amount);

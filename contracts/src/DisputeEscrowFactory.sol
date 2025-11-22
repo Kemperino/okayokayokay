@@ -21,9 +21,14 @@ contract DisputeEscrowFactory is AccessControl {
       constructor(address _usdc, address _admin) {
           usdc = _usdc;
 
-          // Grant admin role to deployer
-          _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+          // Grant both DEFAULT_ADMIN_ROLE and ADMIN_ROLE to the admin
+          _grantRole(DEFAULT_ADMIN_ROLE, _admin);
           _grantRole(ADMIN_ROLE, _admin);
+
+          // Set ADMIN_ROLE as the admin of OPERATOR_ROLE and DISPUTE_AGENT_ROLE
+          // This allows ADMIN_ROLE holders to grant/revoke these roles
+          _setRoleAdmin(OPERATOR_ROLE, ADMIN_ROLE);
+          _setRoleAdmin(DISPUTE_AGENT_ROLE, ADMIN_ROLE);
       }
 
       function registerService(
@@ -31,6 +36,8 @@ contract DisputeEscrowFactory is AccessControl {
           string calldata metadataURI
       ) external returns (address escrowContract) {
           address sender = msg.sender;
+          require(serviceToEscrow[sender] == address(0), "Service already registered");
+
           // Deploy new DisputeEscrow for this service
           escrowContract = address(new DisputeEscrow(
               sender,
