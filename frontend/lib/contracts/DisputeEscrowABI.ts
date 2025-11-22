@@ -85,9 +85,40 @@ export const DisputeEscrowABI = [
   {
     inputs: [
       { internalType: 'bytes32', name: 'requestId', type: 'bytes32' },
-      { internalType: 'bool', name: 'acceptClaim', type: 'bool' },
+      { internalType: 'bool', name: 'acceptRefund', type: 'bool' },
     ],
     name: 'respondToDispute',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'bytes32', name: 'requestId', type: 'bytes32' }],
+    name: 'escalateDispute',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'bytes32', name: 'requestId', type: 'bytes32' }],
+    name: 'earlyRelease',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'bytes32', name: 'requestId', type: 'bytes32' }],
+    name: 'cancelDispute',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { internalType: 'bytes32', name: 'requestId', type: 'bytes32' },
+      { internalType: 'bool', name: 'refundBuyer', type: 'bool' },
+    ],
+    name: 'resolveDispute',
     outputs: [],
     stateMutability: 'nonpayable',
     type: 'function',
@@ -127,6 +158,28 @@ export const DisputeEscrowABI = [
       { indexed: false, internalType: 'bool', name: 'accepted', type: 'bool' },
     ],
     name: 'DisputeResponded',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [{ indexed: true, internalType: 'bytes32', name: 'requestId', type: 'bytes32' }],
+    name: 'DisputeEscalated',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'bytes32', name: 'requestId', type: 'bytes32' },
+      { indexed: false, internalType: 'bool', name: 'buyerRefunded', type: 'bool' },
+      { indexed: true, internalType: 'address', name: 'disputeAgent', type: 'address' },
+    ],
+    name: 'DisputeResolved',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [{ indexed: true, internalType: 'bytes32', name: 'requestId', type: 'bytes32' }],
+    name: 'DisputeCancelled',
     type: 'event',
   },
 ] as const;
