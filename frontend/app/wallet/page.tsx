@@ -3,8 +3,8 @@ import Link from "next/link";
 
 export default function WalletPage() {
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen ">
+      <div className="max-w-7xl p-8 mx-auto">
         <div className="mb-6">
           <Link
             href="/"
