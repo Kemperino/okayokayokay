@@ -31,9 +31,8 @@ show_menu() {
     echo "9. Escalate Dispute"
     echo "10. Resolve Dispute"
     echo "11. Cancel Dispute"
-    echo "12. Mint Test USDC"
-    echo "13. Check Contract Balances"
-    echo "14. Get Request Status"
+    echo "12. Check Contract Balances"
+    echo "13. Get Request Status"
     echo "0. Exit"
     echo ""
 }
@@ -247,24 +246,7 @@ cancel_dispute() {
         -vvv
 }
 
-# 12. Mint Test USDC
-mint_usdc() {
-    echo -e "${GREEN}Minting Test USDC...${NC}"
-
-    check_env "USDC_ADDRESS" || return
-
-    read -p "Recipient Address (leave empty for self): " RECIPIENT
-    read -p "Amount (in USDC smallest unit, 6 decimals): " AMOUNT
-
-    RECIPIENT=$RECIPIENT \
-    MINT_AMOUNT=$AMOUNT \
-    forge script script/EscrowOperations.s.sol:MintTestUSDCScript \
-        --rpc-url $RPC_URL \
-        --broadcast \
-        -vvv
-}
-
-# 13. Check Balances
+# 12. Check Balances
 check_balances() {
     echo -e "${BLUE}Checking Balances...${NC}"
 
@@ -284,7 +266,7 @@ check_balances() {
     fi
 }
 
-# 14. Get Request Status
+# 13. Get Request Status
 get_request_status() {
     echo -e "${BLUE}Getting Request Status...${NC}"
 
@@ -326,9 +308,8 @@ while true; do
         9) escalate_dispute ;;
         10) resolve_dispute ;;
         11) cancel_dispute ;;
-        12) mint_usdc ;;
-        13) check_balances ;;
-        14) get_request_status ;;
+        12) check_balances ;;
+        13) get_request_status ;;
         0) echo "Exiting..."; exit 0 ;;
         *) echo -e "${RED}Invalid option${NC}" ;;
     esac

@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import "forge-std/Script.sol";
 import "../src/DisputeEscrow.sol";
-import "../src/mocks/MockUSDC.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract ConfirmEscrowScript is Script {
     function run() external {
@@ -67,26 +67,5 @@ contract FundEscrowScript is Script {
         console.log("Amount:", amount);
         console.log("New Balance:", usdc.balanceOf(escrowAddress));
         console.log("=========================");
-    }
-}
-
-contract MintTestUSDCScript is Script {
-    function run() external {
-        uint256 privateKey = vm.envUint("PRIVATE_KEY");
-        address usdcAddress = vm.envAddress("USDC_ADDRESS");
-        address recipient = vm.envOr("RECIPIENT", vm.addr(privateKey));
-        uint256 amount = vm.envOr("MINT_AMOUNT", uint256(10000 * 10**6)); // Default 10,000 USDC
-
-        MockUSDC usdc = MockUSDC(usdcAddress);
-
-        vm.startBroadcast(privateKey);
-        usdc.mint(recipient, amount);
-        vm.stopBroadcast();
-
-        console.log("===== USDC Minted =====");
-        console.log("Recipient:", recipient);
-        console.log("Amount:", amount);
-        console.log("New Balance:", usdc.balanceOf(recipient));
-        console.log("=======================");
     }
 }

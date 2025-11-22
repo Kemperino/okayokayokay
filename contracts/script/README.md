@@ -38,7 +38,6 @@ Interactive menu-driven script for all backend operations:
 
 #### Escrow Operations
 - `EscrowOperations.s.sol` - Fund, confirm, release escrow
-- `MintTestUSDCScript` - Mint test USDC tokens
 
 #### Dispute Operations
 - `DisputeOperations.s.sol` - Open, respond, escalate, resolve disputes
@@ -75,8 +74,8 @@ Automated test that demonstrates complete flow:
 Required in `.env`:
 ```
 PRIVATE_KEY=0x...
-FACTORY_ADDRESS=0x...
-USDC_ADDRESS=0x...
+USDC_ADDRESS=0x036CbD53842c5426634e7929541eC2318f3dCF7e  # Base Sepolia USDC
+FACTORY_ADDRESS=0x...  # Set after deployment
 ```
 
 Optional:

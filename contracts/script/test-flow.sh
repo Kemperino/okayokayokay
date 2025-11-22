@@ -61,18 +61,13 @@ echo ""
 read -p "Press Enter after funding wallets with ETH..."
 
 echo ""
-echo -e "${GREEN}Step 3: Mint test USDC${NC}"
+echo -e "${GREEN}Step 3: Fund buyer with USDC${NC}"
 echo ""
-
-# Mint USDC to buyer (10,000 USDC)
-MINT_AMOUNT=10000000000  # 10,000 USDC with 6 decimals
-
-RECIPIENT=$BUYER_ADDR \
-MINT_AMOUNT=$MINT_AMOUNT \
-forge script script/EscrowOperations.s.sol:MintTestUSDCScript \
-    --rpc-url $RPC_URL \
-    --broadcast \
-    --private-key $PRIVATE_KEY
+echo "Note: You need to manually send USDC to the buyer address:"
+echo "Buyer: $BUYER_ADDR"
+echo ""
+echo "For Base Sepolia, get test USDC from a faucet or transfer from another wallet."
+read -p "Press Enter after funding buyer with USDC..."
 
 echo ""
 echo -e "${GREEN}Step 4: Set operator role${NC}"

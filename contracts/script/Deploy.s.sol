@@ -3,7 +3,6 @@ pragma solidity ^0.8.20;
 
 import "forge-std/Script.sol";
 import "../src/DisputeEscrowFactory.sol";
-import "../src/mocks/MockUSDC.sol";
 
 contract DeployScript is Script {
     function run() external {
@@ -11,25 +10,14 @@ contract DeployScript is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         address admin = vm.envOr("ADMIN_ADDRESS", vm.addr(deployerPrivateKey));
 
-        // Try to load USDC address from env, or deploy mock
-        address usdc = vm.envOr("USDC_ADDRESS", address(0));
+        // USDC address is required
+        address usdc = vm.envAddress("USDC_ADDRESS");
 
-        // If no USDC address provided, deploy a mock
-        bool deployedMockUsdc = false;
-        if (usdc == address(0)) {
-            console.log("No USDC address provided, deploying Mock USDC...");
-            deployedMockUsdc = true;
-        }
+        // Verify USDC address is valid
+        require(usdc != address(0), "USDC_ADDRESS must be set in .env");
 
         // Start broadcasting transactions
         vm.startBroadcast(deployerPrivateKey);
-
-        // Deploy Mock USDC if needed
-        if (deployedMockUsdc) {
-            MockUSDC mockUsdc = new MockUSDC();
-            usdc = address(mockUsdc);
-            console.log("Mock USDC deployed at:", usdc);
-        }
 
         // Deploy DisputeEscrowFactory
         DisputeEscrowFactory factory = new DisputeEscrowFactory(

@@ -34,6 +34,16 @@ if [ -z "$PRIVATE_KEY" ]; then
     exit 1
 fi
 
+# Check if USDC_ADDRESS is set
+if [ -z "$USDC_ADDRESS" ]; then
+    echo -e "${RED}Error: USDC_ADDRESS not set in .env!${NC}"
+    echo ""
+    echo "Set the USDC address in your .env file."
+    echo "For Base Sepolia, use: 0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+    echo ""
+    exit 1
+fi
+
 # Get deployer address
 DEPLOYER_ADDRESS=$(cast wallet address --private-key $PRIVATE_KEY)
 echo -e "Deployer Address: ${GREEN}$DEPLOYER_ADDRESS${NC}"
