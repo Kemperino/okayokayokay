@@ -5,6 +5,22 @@ import "forge-std/Test.sol";
 import "../src/DisputeEscrow.sol";
 import "../src/DisputeEscrowFactory.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+// Simple test token for testing
+contract TestERC20 is ERC20 {
+    constructor() ERC20("Test USDC", "USDC") {
+        _mint(msg.sender, 1000000 * 10**6); // Mint 1M USDC (6 decimals)
+    }
+
+    function decimals() public pure override returns (uint8) {
+        return 6;
+    }
+
+    function mint(address to, uint256 amount) public {
+        _mint(to, amount);
+    }
+}
 
 contract DisputeEscrowTest is Test {
     DisputeEscrowFactory public factory;
@@ -36,17 +52,13 @@ contract DisputeEscrowTest is Test {
     event DisputeCancelled(bytes32 indexed requestId);
 
     function setUp() public {
-        // For testing, we use a deterministic address for USDC
-        // In real tests, you would use the actual USDC address on the testnet
-        address usdcAddress = address(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
-
-        // Deploy the USDC token code to this address for testing
-        vm.etch(usdcAddress, hex"00");
+        // Deploy a test ERC20 token to simulate USDC
+        address usdcAddress = address(new TestERC20());
         usdc = IERC20(usdcAddress);
 
         // Deploy factory
         vm.prank(admin);
-        factory = new DisputeEscrowFactory(address(usdc), admin);
+        factory = new DisputeEscrowFactory(usdcAddress, admin);
 
         // Set roles
         vm.startPrank(admin);
@@ -59,24 +71,22 @@ contract DisputeEscrowTest is Test {
         address escrowAddress = factory.registerService(servicePublicKey, metadataURI);
         escrow = DisputeEscrow(escrowAddress);
 
-        // Fund facilitator with USDC using forge's deal
-        deal(address(usdc), facilitator, 10000 * 10**6);
-
-        // Fund buyers with some USDC
-        deal(address(usdc), buyer1, 1000 * 10**6);
-        deal(address(usdc), buyer2, 1000 * 10**6);
+        // Fund facilitator and buyers with USDC
+        TestERC20(address(usdc)).mint(facilitator, 10000 * 10**6);
+        TestERC20(address(usdc)).mint(buyer1, 1000 * 10**6);
+        TestERC20(address(usdc)).mint(buyer2, 1000 * 10**6);
     }
 
     // ============ Deployment Tests ============
 
-    function testFactoryDeployment() public {
+    function testFactoryDeployment() public view {
         assertEq(address(factory.usdc()), address(usdc));
         assertTrue(factory.hasRole(factory.ADMIN_ROLE(), admin));
         assertTrue(factory.isOperator(operator));
         assertTrue(factory.isDisputeAgent(disputeAgent));
     }
 
-    function testEscrowDeployment() public {
+    function testEscrowDeployment() public view {
         assertEq(escrow.serviceProvider(), serviceProvider);
         assertEq(escrow.serviceMetadataURI(), metadataURI);
         assertEq(address(escrow.factory()), address(factory));
