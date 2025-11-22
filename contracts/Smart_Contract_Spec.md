@@ -38,3 +38,12 @@ Payments are settled by facilitator through x402. In v1, the facilitator can onl
     - user can cancel a dispute
 - agent_respond_dispute
     - agent responds to dispute
+
+
+# Later Features
+
+- Request ID (encode information in nonce)
+- Batching withdraws
+- Batching escrow confirmations
+- Batching client refunds (instead of immediately transfering to client)
+- Third Layer: Kleros
