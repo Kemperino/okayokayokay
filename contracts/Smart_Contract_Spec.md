@@ -1,10 +1,20 @@
 escrow contract for dispute resolution contract. 
 for now, we assume that disputes are done on a per-service basis (later: batch disputes).
 
+Payments are settled by facilitator through x402. In v1, the facilitator can only transfer with auth and our operator will have to append more information to each transfer. So, after a payment is made to this escrow contract (or another vault controlled by this contract), the operator will assign metadata to the funds, such as the recipient, sender, API response hash etc. 
+
+# Contracts
+
+## Factory
+
 - register_service_provider:
     - service provider can register
     - some metadata on provider (IPFS)
     - post public key
+    - creates a new DisputeEscrow contract
+
+## DisputeEscrow
+
 - receive payment: 
 - create purchase:
     - amount of USDC, from, to, nonce
