@@ -59,6 +59,9 @@ export {
   batchGetRequestDetails,
 } from './status-queries';
 
+// Helpers
+export { getEscrowAddressForMerchant, toChecksumAddress } from './helpers';
+
 // Legacy exports for backward compatibility
 export {
   getRequestFromContract,

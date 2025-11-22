@@ -1,12 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { type Hex } from 'viem';
-import {
-  getRequestStatusFromContract,
-  toRequestIdHex,
-} from '@/lib/contracts/DisputeEscrowContract';
-import { RequestStatus, RequestStatusLabels } from '@/lib/contracts/DisputeEscrowABI';
+import ContractStatusBadge from './ContractStatusBadge';
 
 interface ResourceRequest {
   request_id: string;
@@ -19,66 +13,16 @@ interface ResourceRequest {
   resource_url: string | null;
   status: string;
   error_message: string | null;
+  escrow_contract_address: string | null;
   created_at: string;
   completed_at: string | null;
 }
 
-interface RequestWithContractStatus extends ResourceRequest {
-  contractStatus?: RequestStatus | null;
-  contractStatusLabel?: string;
-  isLoadingContractStatus?: boolean;
-}
-
 export default function MerchantResourceRequests({
   requests,
-  contractAddress,
 }: {
   requests: ResourceRequest[];
-  contractAddress?: string;
 }) {
-  const [requestsWithStatus, setRequestsWithStatus] = useState<
-    RequestWithContractStatus[]
-  >(requests);
-
-  useEffect(() => {
-    // Fetch on-chain status for each request
-    const fetchContractStatuses = async () => {
-      const updatedRequests = await Promise.all(
-        requests.map(async (req) => {
-          try {
-            const requestIdHex = toRequestIdHex(req.request_id);
-            const contractStatus = await getRequestStatusFromContract(
-              requestIdHex,
-              contractAddress as Hex | undefined
-            );
-
-            return {
-              ...req,
-              contractStatus,
-              contractStatusLabel: contractStatus !== null
-                ? RequestStatusLabels[contractStatus]
-                : 'Unknown',
-              isLoadingContractStatus: false,
-            };
-          } catch (error) {
-            console.error('Error fetching contract status:', error);
-            return {
-              ...req,
-              contractStatus: null,
-              contractStatusLabel: 'Error',
-              isLoadingContractStatus: false,
-            };
-          }
-        })
-      );
-
-      setRequestsWithStatus(updatedRequests);
-    };
-
-    if (requests.length > 0) {
-      fetchContractStatuses();
-    }
-  }, [requests, contractAddress]);
 
   if (!requests || requests.length === 0) {
     return (
@@ -87,21 +31,6 @@ export default function MerchantResourceRequests({
       </div>
     );
   }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'paid':
-        return 'bg-blue-100 text-blue-800';
-      case 'failed':
-        return 'bg-red-100 text-red-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -126,7 +55,7 @@ export default function MerchantResourceRequests({
 
   return (
     <div className="space-y-3">
-      {requestsWithStatus.map((req) => {
+      {requests.map((req) => {
         const description = getSellerDescription(req.seller_description);
         const params = req.input_data?.params || {};
         const path = req.input_data?.path || req.resource_url || 'Unknown';
@@ -147,19 +76,11 @@ export default function MerchantResourceRequests({
                   {path}
                 </div>
               </div>
-              <div className="flex flex-col gap-1 items-end ml-3">
-                <span
-                  className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${getStatusColor(
-                    req.status
-                  )}`}
-                >
-                  DB: {req.status.toUpperCase()}
-                </span>
-                {req.contractStatusLabel && (
-                  <span className="px-2 py-1 rounded text-xs font-medium whitespace-nowrap bg-indigo-100 text-indigo-800">
-                    Chain: {req.contractStatusLabel}
-                  </span>
-                )}
+              <div className="flex flex-col gap-2 items-end ml-3">
+                <ContractStatusBadge
+                  requestId={req.request_id}
+                  escrowContractAddress={req.escrow_contract_address}
+                />
               </div>
             </div>
 

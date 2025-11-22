@@ -157,10 +157,13 @@ create table resource_requests (
   resource_url text,
   status text not null default 'pending',
   error_message text,
+  escrow_contract_address text,
   created_at timestamptz not null default now(),
   completed_at timestamptz,
   primary key (request_id, user_address)
 );
+
+comment on column resource_requests.escrow_contract_address is 'The DisputeEscrow contract address where funds were sent (from transferWithAuth)';
 
 -- Indexes for better query performance
 create index idx_session_wallets_session_id on session_wallets(session_id);
@@ -197,6 +200,7 @@ create index idx_resource_requests_seller_address on resource_requests(seller_ad
 create index idx_resource_requests_status on resource_requests(status);
 create index idx_resource_requests_tx_hash on resource_requests(tx_hash);
 create index idx_resource_requests_created_at on resource_requests(created_at desc);
+create index idx_resource_requests_escrow_contract on resource_requests(escrow_contract_address);
 
 -- Row Level Security (RLS) policies
 alter table session_wallets enable row level security;

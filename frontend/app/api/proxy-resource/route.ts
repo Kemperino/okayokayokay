@@ -62,18 +62,20 @@ export async function POST(req: NextRequest) {
     if (!result.success) {
       const requestId = `failed-${Date.now()}-${Math.random().toString(36).substring(7)}`;
       const inputData = { path, params: params || null };
+      const sellerAddress = result.paymentDetails?.to || resource.payment_address || 'unknown';
 
       await createResourceRequest({
         request_id: requestId,
         input_data: inputData,
         output_data: null,
-        seller_address: result.paymentDetails?.to || 'unknown',
+        seller_address: sellerAddress,
         user_address: walletAddress,
         seller_description: wellKnownData || resource.well_known_data || null,
         tx_hash: null,
         resource_url: url.toString(),
         status: 'failed',
         error_message: result.error || 'Unknown error',
+        escrow_contract_address: result.paymentDetails?.to || null,
       });
 
       return NextResponse.json(
@@ -84,20 +86,25 @@ export async function POST(req: NextRequest) {
 
     // Extract seller address from the response data (merchantPublicKey)
     const merchantPublicKey = result.data?.merchantPublicKey;
+    const sellerAddress = merchantPublicKey || resource.payment_address || result.paymentDetails?.to || 'unknown';
     const requestId = result.data?.requestId || result.paymentDetails?.txHash || `req-${Date.now()}-${Math.random().toString(36).substring(7)}`;
     const inputData = { path, params: params || null };
+
+    // The escrow contract address is the payment recipient (where x402 payment was sent)
+    const escrowContractAddress = result.paymentDetails?.to || null;
 
     await createResourceRequest({
       request_id: requestId,
       input_data: inputData,
       output_data: result.data,
-      seller_address: merchantPublicKey || resource.payment_address || result.paymentDetails?.to || 'unknown',
+      seller_address: sellerAddress,
       user_address: walletAddress,
       seller_description: wellKnownData || resource.well_known_data || null,
       tx_hash: result.paymentDetails?.txHash || null,
       resource_url: url.toString(),
       status: 'completed',
       error_message: null,
+      escrow_contract_address: escrowContractAddress,
     });
 
     return NextResponse.json({

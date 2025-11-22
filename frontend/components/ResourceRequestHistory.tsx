@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 
+import ContractStatusBadge from './ContractStatusBadge';
+
 interface ResourceRequest {
   request_id: string;
   input_data: any;
@@ -13,6 +15,7 @@ interface ResourceRequest {
   resource_url: string | null;
   status: string;
   error_message: string | null;
+  escrow_contract_address: string | null;
   created_at: string;
   completed_at: string | null;
 }
@@ -86,13 +89,12 @@ export default function ResourceRequestHistory({
                   {path}
                 </div>
               </div>
-              <span
-                className={`ml-3 px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${getStatusColor(
-                  request.status
-                )}`}
-              >
-                {request.status.toUpperCase()}
-              </span>
+              <div className="ml-3">
+                <ContractStatusBadge
+                  requestId={request.request_id}
+                  escrowContractAddress={request.escrow_contract_address}
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-xs text-primary/70">
@@ -120,6 +122,16 @@ export default function ResourceRequestHistory({
                   <span className="font-semibold text-primary/80">Tx:</span>{" "}
                   <code className="bg-contrast px-1 py-0.5 rounded text-primary">
                     {request.tx_hash.slice(0, 10)}...{request.tx_hash.slice(-8)}
+                  </code>
+                </div>
+              )}
+
+              {request.escrow_contract_address && (
+                <div className="col-span-2">
+                  <span className="font-semibold">Escrow:</span>{' '}
+                  <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">
+                    {request.escrow_contract_address.slice(0, 8)}...
+                    {request.escrow_contract_address.slice(-6)}
                   </code>
                 </div>
               )}

@@ -13,7 +13,8 @@
     "supabase:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > lib/supabase/database.types.ts",
     "seed:resources": "tsx scripts/seed-resources.ts",
-    "backfill:seller-descriptions": "tsx scripts/backfill-seller-descriptions.ts"
+    "backfill:seller-descriptions": "tsx scripts/backfill-seller-descriptions.ts",
+    "generate-webhook": "tsx scripts/generate-webhook-query.ts"
   },
   "dependencies": {
     "@coinbase/cdp-sdk": "^1.38.6",
