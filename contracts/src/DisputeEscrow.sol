@@ -54,6 +54,7 @@ contract DisputeEscrow {
     event DisputeResponded(bytes32 indexed requestId, bool accepted);
     event DisputeEscalated(bytes32 indexed requestId);
     event DisputeResolved(bytes32 indexed requestId, bool buyerRefunded, address indexed disputeAgent);
+    event DisputeCancelled(bytes32 indexed requestId);
 
     // Modifiers
     modifier onlyOperator() {
