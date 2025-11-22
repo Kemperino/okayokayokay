@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { WalletBadge } from "@/components/WalletBadge";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -24,18 +25,21 @@ export default function RootLayout({
                 </Link>
                 <div className="ml-6 flex space-x-4">
                   <Link
-                    href="/wallet"
-                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md"
-                  >
-                    Wallet
-                  </Link>
-                  <Link
                     href="/resources"
                     className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md"
                   >
                     Resources
                   </Link>
+                  <Link
+                    href="/disputes"
+                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md"
+                  >
+                    My Disputes
+                  </Link>
                 </div>
+              </div>
+              <div className="flex items-center">
+                <WalletBadge />
               </div>
             </div>
           </div>

@@ -12,19 +12,22 @@
     "supabase:status": "supabase status",
     "supabase:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > lib/supabase/database.types.ts",
-    "seed:resources": "tsx scripts/seed-resources.ts"
+    "seed:resources": "tsx scripts/seed-resources.ts",
+    "backfill:seller-descriptions": "tsx scripts/backfill-seller-descriptions.ts"
   },
   "dependencies": {
     "@coinbase/cdp-sdk": "^1.38.6",
+    "@coinbase/onchainkit": "^1.1.2",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.84.0",
-    "@tanstack/react-query": "5.x",
+    "@tanstack/react-query": "^5.90.10",
     "dotenv": "^17.2.3",
     "lucide-react": "^0.554.0",
     "next": "^15.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "viem": "2.x",
+    "wagmi": "^3.0.1",
     "x402-fetch": "^0.7.3"
   },
   "devDependencies": {
