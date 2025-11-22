@@ -3,6 +3,10 @@ import AddResourceForm from '@/components/AddResourceForm';
 import ResourceList from '@/components/ResourceList';
 import ResourceRequestHistory from '@/components/ResourceRequestHistory';
 
+// Force dynamic rendering - don't cache this page
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function ResourcesPage() {
   const [resourcesResult, requestsResult] = await Promise.all([
     getActiveResources(),

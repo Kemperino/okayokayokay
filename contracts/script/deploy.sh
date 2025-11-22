@@ -6,8 +6,30 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+NETWORK="${1:-sepolia}"
+
+case "$NETWORK" in
+    sepolia|base-sepolia)
+        NETWORK_NAME="Base Sepolia"
+        RPC_URL="https://sepolia.base.org"
+        EXPLORER_URL_BASE="https://sepolia.basescan.org"
+        MIN_BALANCE_WEI="10000000000000000" # 0.01 ETH
+        ;;
+    mainnet|base|base-mainnet)
+        NETWORK_NAME="Base Mainnet"
+        RPC_URL="https://mainnet.base.org"
+        EXPLORER_URL_BASE="https://basescan.org"
+        MIN_BALANCE_WEI="10000000000000000" # adjust if you want a higher safety threshold
+        ;;
+    *)
+        echo -e "${RED}Unknown network: $NETWORK${NC}"
+        echo "Usage: $0 [sepolia|base-sepolia|mainnet|base|base-mainnet]"
+        exit 1
+        ;;
+esac
+
 echo ""
-echo -e "${GREEN}=== Base Sepolia Deployment Script ===${NC}"
+echo -e "${GREEN}=== $NETWORK_NAME Deployment Script ===${NC}"
 echo ""
 
 # Check if .env exists
@@ -45,27 +67,27 @@ if [ -z "$USDC_ADDRESS" ]; then
 fi
 
 # Get deployer address
-DEPLOYER_ADDRESS=$(cast wallet address --private-key $PRIVATE_KEY)
+DEPLOYER_ADDRESS=$(cast wallet address --private-key "$PRIVATE_KEY")
 echo -e "Deployer Address: ${GREEN}$DEPLOYER_ADDRESS${NC}"
 
 # Check balance
 echo ""
-echo "Checking balance on Base Sepolia..."
-BALANCE=$(cast balance $DEPLOYER_ADDRESS --rpc-url https://sepolia.base.org)
-BALANCE_ETH=$(cast to-unit $BALANCE ether)
+echo "Checking balance on $NETWORK_NAME..."
+BALANCE=$(cast balance "$DEPLOYER_ADDRESS" --rpc-url "$RPC_URL")
+BALANCE_ETH=$(cast to-unit "$BALANCE" ether)
 echo -e "Balance: ${GREEN}$BALANCE_ETH ETH${NC}"
 
-# Check if balance is sufficient (at least 0.01 ETH for deployment)
-MIN_BALANCE="10000000000000000" # 0.01 ETH in wei
-if [ "$BALANCE" -lt "$MIN_BALANCE" ]; then
+if [ "$BALANCE" -lt "$MIN_BALANCE_WEI" ]; then
     echo ""
-    echo -e "${YELLOW}Warning: Low balance!${NC}"
-    echo "You need at least 0.01 ETH for deployment."
+    echo -e "${YELLOW}Warning: Low balance for $NETWORK_NAME!${NC}"
+    echo "You need at least $(cast to-unit "$MIN_BALANCE_WEI" ether) ETH for deployment."
     echo ""
-    echo "Get Base Sepolia ETH from:"
-    echo "  https://www.alchemy.com/faucets/base-sepolia"
-    echo "  https://www.coinbase.com/faucets/base-ethereum-goerli-faucet"
-    echo ""
+    if [[ "$NETWORK_NAME" == "Base Sepolia" ]]; then
+        echo "Get Base Sepolia ETH from:"
+        echo "  https://www.alchemy.com/faucets/base-sepolia"
+        echo "  https://www.coinbase.com/faucets/base-ethereum-goerli-faucet"
+        echo ""
+    fi
     read -p "Continue anyway? (y/n): " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -85,28 +107,28 @@ fi
 echo ""
 echo -e "${GREEN}Build successful!${NC}"
 echo ""
-echo "Deploying to Base Sepolia..."
+echo "Deploying to $NETWORK_NAME..."
 echo ""
 
 # Run the deployment script
 forge script script/Deploy.s.sol:DeployScript \
-    --rpc-url https://sepolia.base.org \
+    --rpc-url "$RPC_URL" \
     --broadcast \
     --verify \
     -vvv
 
 if [ $? -eq 0 ]; then
     echo ""
-    echo -e "${GREEN}=== Deployment Successful! ===${NC}"
+    echo -e "${GREEN}=== Deployment Successful on $NETWORK_NAME! ===${NC}"
     echo ""
     echo "Check the output above for contract addresses."
     echo "Add them to your .env file for future use."
     echo ""
     echo "View on BaseScan:"
-    echo "  https://sepolia.basescan.org/address/<CONTRACT_ADDRESS>"
+    echo "  $EXPLORER_URL_BASE/address/<CONTRACT_ADDRESS>"
 else
     echo ""
-    echo -e "${RED}Deployment failed!${NC}"
+    echo -e "${RED}Deployment failed on $NETWORK_NAME!${NC}"
     echo "Check the error messages above."
     exit 1
 fi
