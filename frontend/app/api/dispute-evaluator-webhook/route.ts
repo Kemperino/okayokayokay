@@ -33,7 +33,8 @@ export async function POST(request: NextRequest) {
       eventType: body.type,
       logsCount: body.event?.data?.block?.logs?.length || 0,
       hasEvent: !!body.event,
-      eventKeys: body.event ? Object.keys(body.event) : []
+      eventKeys: body.event ? Object.keys(body.event) : [],
+      fullPayload: JSON.stringify(body, null, 2)
     });
 
     // TEMPORARILY DISABLED: Signature verification
