@@ -18,16 +18,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
-    const body = JSON.parse(bodyText);
+    const payload = JSON.parse(bodyText);
 
     console.log('Dispute webhook received:', {
-      event: body.event,
-      contractAddress: body.contractAddress,
-      requestId: body.args?.requestId
+      webhookId: payload.webhookId,
+      network: payload.event?.network,
+      activityCount: payload.event?.activity?.length || 0
     });
 
-    // Call the dispute agent handler
-    const result = await handleDisputeWebhook(body);
+    const result = await handleDisputeWebhook(payload);
 
     // Return the response
     return NextResponse.json(result, {
