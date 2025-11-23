@@ -2,23 +2,12 @@ import { getResourceRequestById } from "@/lib/queries/resources.server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import TransactionDetailClient from "@/components/TransactionDetailClient";
+import ContractStatusBadge from "@/components/ContractStatusBadge";
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-function getStatusColor(status: string) {
-  switch (status) {
-    case "completed":
-      return "bg-success/20 text-success";
-    case "paid":
-      return "bg-highlight/20 text-highlight";
-    case "failed":
-      return "bg-error/20 text-error";
-    default:
-      return "bg-contrast text-primary";
-  }
-}
 
 function getSellerDescription(sellerDescription: any): string | null {
   if (!sellerDescription) return null;
@@ -80,13 +69,14 @@ export default async function TransactionDetailPage({ params }: PageProps) {
               {path}
             </div>
           </div>
-          <span
-            className={`ml-3 px-3 py-1 rounded text-sm font-medium whitespace-nowrap ${getStatusColor(
-              request.status
-            )}`}
-          >
-            {request.status.toUpperCase()}
-          </span>
+          {request.escrow_contract_address && (
+            <div className="ml-3">
+              <ContractStatusBadge
+                requestId={request.request_id}
+                escrowContractAddress={request.escrow_contract_address}
+              />
+            </div>
+          )}
         </div>
 
         {/* Request ID */}

@@ -1,14 +1,7 @@
-import BuyerDisputesWrapper from "@/components/BuyerDisputesWrapper";
 import Link from "next/link";
+import DisputesPageClient from "@/components/DisputesPageClient";
 
-interface PageProps {
-  searchParams: Promise<{ contract?: string }>;
-}
-
-export default async function DisputesPage({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const contractAddress = params.contract;
-
+export default async function DisputesPage() {
   return (
     <div className="p-8 max-w-7xl mx-auto">
       <div className="mb-6">
@@ -23,13 +16,12 @@ export default async function DisputesPage({ searchParams }: PageProps) {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2 text-primary">My Disputes</h1>
         <p className="text-primary/70">
-          View your transaction history, track disputes, and monitor on-chain
-          status
+          View and manage your active disputes. Only transactions with open disputes, 
+          escalations, or resolutions are shown here.
         </p>
       </div>
 
-      {/* TODO: Put that in the dashboard  */}
-      {/* <BuyerDisputesWrapper contractAddress={contractAddress} /> */}
+      <DisputesPageClient />
     </div>
   );
 }
