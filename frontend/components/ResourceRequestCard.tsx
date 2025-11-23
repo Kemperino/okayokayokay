@@ -3,6 +3,8 @@
 import Link from "next/link";
 
 import ContractStatusBadge from "./ContractStatusBadge";
+import { getContractNextDeadline } from "@/lib/actions/get-contract-status";
+import { useEffect, useState } from "react";
 
 interface ResourceRequest {
   request_id: string;
@@ -42,11 +44,28 @@ const getSellerDescription = (sellerDescription: any): string | null => {
   return null;
 };
 
-export default function ResourceRequestCard({ request }: ResourceRequestCardProps) {
+export default function ResourceRequestCard({
+  request,
+}: ResourceRequestCardProps) {
   const description = getSellerDescription(request.seller_description);
   const params = request.input_data?.params || {};
-  const path =
-    request.input_data?.path || request.resource_url || "Unknown";
+  const path = request.input_data?.path || request.resource_url || "Unknown";
+
+  const [nextDeadline, setNextDeadline] = useState<any | null>(null);
+
+  const fetchNextDeadline = async () => {
+    const newNextDeadline = await getContractNextDeadline(
+      request.request_id,
+      request.escrow_contract_address
+    );
+    setNextDeadline(newNextDeadline);
+  };
+
+  useEffect(() => {
+    fetchNextDeadline();
+  }, []);
+
+  console.log("nextDeadline", nextDeadline);
 
   return (
     <Link
@@ -125,4 +144,3 @@ export default function ResourceRequestCard({ request }: ResourceRequestCardProp
     </Link>
   );
 }
-
