@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     environment: {
       hasWebhookSecret: !!process.env.WEBHOOK_SECRET,
       hasOpenAI: !!process.env.OPENAI_API_KEY,
-      hasSupabase: !!process.env.SUPABASE_URL,
+      hasSupabase: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
       hasPrivateKey: !!process.env.AGENT_PRIVATE_KEY
     }
   });

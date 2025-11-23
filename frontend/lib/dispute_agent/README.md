@@ -46,8 +46,8 @@ FACTORY_CONTRACT_ADDRESS=<factory_address>
 CHAIN_ID=84532  # Base Sepolia
 
 # Supabase
-SUPABASE_URL=<your_supabase_url>
-SUPABASE_SERVICE_KEY=<service_role_key>
+NEXT_PUBLIC_SUPABASE_URL=<your_supabase_url>
+SUPABASE_SERVICE_KEY=<service_key>
 
 # OpenAI
 OPENAI_API_KEY=<your_openai_key>
