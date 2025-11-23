@@ -319,11 +319,11 @@ export default function TransactionDetailClient({
     );
   }
 
-  const displayAmount = amount || statusData?.amount || fetchedAmount;
+  const displayAmount = amount || statusData?.amount || fetchedAmount || BigInt(1000);
 
   return (
     <div className="space-y-6">
-      {statusData && statusData.hasStatus && displayAmount && (
+      {statusData && statusData.hasStatus && (
         <MoneyFlowDiagram
           status={statusData.status}
           amount={displayAmount}
