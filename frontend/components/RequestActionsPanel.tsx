@@ -86,6 +86,8 @@ export default function RequestActionsPanel({
         return 'bg-green-100 text-green-800 border-green-200';
       case RequestStatus.DisputeOpened:
         return 'bg-orange-100 text-orange-800 border-orange-200';
+      case RequestStatus.DisputeRejected:
+        return 'bg-red-100 text-red-800 border-red-200';
       case RequestStatus.DisputeEscalated:
         return 'bg-red-100 text-red-800 border-red-200';
       case RequestStatus.SellerAccepted:

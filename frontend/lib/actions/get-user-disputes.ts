@@ -14,6 +14,7 @@ export interface DisputeWithStatus extends ResourceRequest {
 const DISPUTE_STATUSES = [
   RequestStatus.DisputeOpened,
   RequestStatus.SellerAccepted,
+  RequestStatus.DisputeRejected,
   RequestStatus.DisputeEscalated,
   RequestStatus.DisputeResolved,
 ];

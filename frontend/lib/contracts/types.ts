@@ -99,13 +99,15 @@ export function canOpenDispute(request: ServiceRequest, currentTime: bigint = Bi
  * Helper to check if buyer can escalate a dispute
  */
 export function canEscalateDispute(request: ServiceRequest, currentTime: bigint = BigInt(Math.floor(Date.now() / 1000))): boolean {
-  if (request.status !== RequestStatus.DisputeOpened) return false;
+  // Can escalate from DisputeOpened if seller didn't respond and deadline passed
+  if (request.status === RequestStatus.DisputeOpened && !request.sellerRejected && currentTime > request.nextDeadline) {
+    return true;
+  }
 
-  // Can escalate if seller didn't respond and deadline passed
-  if (!request.sellerRejected && currentTime > request.nextDeadline) return true;
-
-  // Can escalate if seller rejected and still within escalation window
-  if (request.sellerRejected && currentTime <= request.nextDeadline) return true;
+  // Can escalate from DisputeRejected if still within escalation window
+  if (request.status === RequestStatus.DisputeRejected && currentTime <= request.nextDeadline) {
+    return true;
+  }
 
   return false;
 }
@@ -129,13 +131,16 @@ export function canReleaseEscrow(request: ServiceRequest, currentTime: bigint = 
     return true;
   }
 
-  if (request.status === RequestStatus.DisputeOpened) {
-    if (request.sellerRejected && currentTime >= request.nextDeadline) {
-      return true;
-    }
+  // If dispute was rejected by seller, can release after escalation deadline
+  if (request.status === RequestStatus.DisputeRejected && currentTime >= request.nextDeadline) {
+    return true;
+  }
+
+  // If dispute is open and seller hasn't responded
+  if (request.status === RequestStatus.DisputeOpened && !request.sellerRejected) {
     // BUYER_ESCALATION_PERIOD = 2 days = 172800 seconds
     const BUYER_ESCALATION_PERIOD = BigInt(172800);
-    if (!request.sellerRejected && currentTime >= request.nextDeadline + BUYER_ESCALATION_PERIOD) {
+    if (currentTime >= request.nextDeadline + BUYER_ESCALATION_PERIOD) {
       return true;
     }
   }
@@ -158,18 +163,17 @@ export function getStatusDescription(request: ServiceRequest, currentTime: bigin
     case RequestStatus.EscrowReleased:
       return 'Funds released to merchant';
     case RequestStatus.DisputeOpened:
-      if (request.sellerRejected) {
-        if (currentTime <= request.nextDeadline) {
-          return 'Dispute rejected by merchant (buyer can escalate)';
-        }
-        return 'Dispute rejected (escalation period expired)';
-      }
       if (currentTime <= request.nextDeadline) {
         return 'Dispute opened (awaiting merchant response)';
       }
       return 'Dispute opened (merchant response period expired)';
     case RequestStatus.SellerAccepted:
       return 'Dispute resolved (buyer refunded)';
+    case RequestStatus.DisputeRejected:
+      if (currentTime <= request.nextDeadline) {
+        return 'Dispute rejected by merchant (buyer can escalate)';
+      }
+      return 'Dispute rejected (escalation period expired)';
     case RequestStatus.DisputeEscalated:
       return 'Dispute escalated to agent';
     case RequestStatus.DisputeResolved:

@@ -190,8 +190,9 @@ export enum RequestStatus {
   EscrowReleased = 2,
   DisputeOpened = 3,
   SellerAccepted = 4,
-  DisputeEscalated = 5,
-  DisputeResolved = 6,
+  DisputeRejected = 5,
+  DisputeEscalated = 6,
+  DisputeResolved = 7,
 }
 
 export const RequestStatusLabels: Record<RequestStatus, string> = {
@@ -200,6 +201,7 @@ export const RequestStatusLabels: Record<RequestStatus, string> = {
   [RequestStatus.EscrowReleased]: 'Escrow Released',
   [RequestStatus.DisputeOpened]: 'Dispute Opened',
   [RequestStatus.SellerAccepted]: 'Seller Accepted',
+  [RequestStatus.DisputeRejected]: 'Dispute Rejected',
   [RequestStatus.DisputeEscalated]: 'Dispute Escalated',
   [RequestStatus.DisputeResolved]: 'Dispute Resolved',
 };

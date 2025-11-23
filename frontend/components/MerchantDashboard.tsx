@@ -111,6 +111,7 @@ export default function MerchantDashboard({ contractAddress }: MerchantDashboard
                   aggregation.released++;
                   break;
                 case RequestStatus.DisputeOpened:
+                case RequestStatus.DisputeRejected:
                 case RequestStatus.DisputeEscalated:
                   aggregation.inDispute++;
                   break;

@@ -177,20 +177,15 @@ export async function canEscalateDispute(
       return false;
     }
 
-    if (request.status !== RequestStatus.DisputeOpened) {
-      return false;
-    }
-
     const currentTime = BigInt(Math.floor(Date.now() / 1000));
 
-    // Can escalate if:
-    // 1. Seller didn't respond (sellerRejected = false) and deadline passed
-    if (!request.sellerRejected && currentTime > request.nextDeadline) {
+    // Can escalate from DisputeOpened if seller didn't respond and deadline passed
+    if (request.status === RequestStatus.DisputeOpened && !request.sellerRejected && currentTime > request.nextDeadline) {
       return true;
     }
 
-    // 2. Seller rejected and buyer is within escalation deadline
-    if (request.sellerRejected && currentTime <= request.nextDeadline) {
+    // Can escalate from DisputeRejected if still within escalation window
+    if (request.status === RequestStatus.DisputeRejected && currentTime <= request.nextDeadline) {
       return true;
     }
 
@@ -203,7 +198,7 @@ export async function canEscalateDispute(
 
 /**
  * Check if a buyer can cancel an existing dispute.
- * Returns true when the request is in DisputeOpened or DisputeEscalated status.
+ * Returns true when the request is in DisputeOpened, DisputeRejected, or DisputeEscalated status.
  */
 export async function canCancelDispute(
   requestId: string,
@@ -229,6 +224,7 @@ export async function canCancelDispute(
 
     return (
       request.status === RequestStatus.DisputeOpened ||
+      request.status === RequestStatus.DisputeRejected ||
       request.status === RequestStatus.DisputeEscalated
     );
   } catch (error) {
