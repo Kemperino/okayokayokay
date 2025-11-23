@@ -65,6 +65,18 @@ const formatCountdown = (secondsRemaining: number): string => {
   return parts.join(" ");
 };
 
+// Truncate address or hash to show first N and last M characters
+const truncateAddress = (
+  address: string,
+  startChars: number = 6,
+  endChars: number = 4
+): string => {
+  if (!address || address.length <= startChars + endChars) {
+    return address;
+  }
+  return `${address.slice(0, startChars)}...${address.slice(-endChars)}`;
+};
+
 export default function ResourceRequestCard({
   request,
 }: ResourceRequestCardProps) {
@@ -123,6 +135,19 @@ export default function ResourceRequestCard({
       href={`/transactions/${request.request_id}`}
       className="block border border-contrast rounded-lg p-4 bg-default shadow-sm hover:shadow hover:border-highlight transition cursor-pointer"
     >
+      <div className="flex items-center w-full justify-between gap-2 mb-2">
+        <div className="text-primary/50 text-xs">
+          {new Date(request.created_at).toLocaleString()}
+        </div>
+        {countdown && (
+          <div className="flex items-center gap-2 text-xs text-red-500">
+            <Clock size={14} className="" />
+            <span className="font-semibold ">Next Deadline:</span>
+            <span className=" font-mono text-red-500">{countdown}</span>
+          </div>
+        )}
+      </div>
+
       <div className="flex justify-between items-start gap-4 mb-3">
         <div className="flex-1 min-w-0">
           {description && (
@@ -130,7 +155,7 @@ export default function ResourceRequestCard({
               {description}
             </div>
           )}
-          <div className="text-sm text-primary/70 font-mono break-all">
+          <div className="text-sm text-blue-500 font-mono break-all">
             {path}
           </div>
         </div>
@@ -143,50 +168,52 @@ export default function ResourceRequestCard({
       </div>
 
       <div className="space-y-2 text-xs text-primary/70">
-        {params && Object.keys(params).length > 0 && (
-          <div>
-            <span className="font-semibold text-primary/80">Params:</span>{" "}
-            {Object.entries(params)
-              .map(([k, v]) => `${k}=${v}`)
-              .join(", ")}
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {params && Object.keys(params).length > 0 && (
+            <div>
+              <span className="font-semibold text-primary/80">Params:</span>{" "}
+              {Object.entries(params)
+                .map(([k, v]) => `${k}=${v}`)
+                .join(", ")}
+            </div>
+          )}
 
-        {request.user_address && (
-          <div>
-            <span className="font-semibold text-primary/80">User:</span>{" "}
-            <code className="bg-contrast px-1 py-0.5 rounded text-xs text-primary font-mono">
-              {request.user_address}
-            </code>
-          </div>
-        )}
+          {request.user_address && (
+            <div>
+              <span className="font-semibold text-primary/80">User:</span>{" "}
+              <code className="bg-contrast px-1 py-0.5 rounded text-xs text-primary font-mono">
+                {truncateAddress(request.user_address)}
+              </code>
+            </div>
+          )}
 
-        {request.seller_address && (
-          <div>
-            <span className="font-semibold text-primary/80">Seller:</span>{" "}
-            <code className="bg-contrast px-1 py-0.5 rounded text-xs text-primary font-mono">
-              {request.seller_address}
-            </code>
-          </div>
-        )}
+          {request.seller_address && (
+            <div>
+              <span className="font-semibold text-primary/80">Seller:</span>{" "}
+              <code className="bg-contrast px-1 py-0.5 rounded text-xs text-primary font-mono">
+                {truncateAddress(request.seller_address)}
+              </code>
+            </div>
+          )}
 
-        {request.tx_hash && (
-          <div>
-            <span className="font-semibold text-primary/80">Tx:</span>{" "}
-            <code className="bg-contrast px-1 py-0.5 rounded text-primary font-mono break-all">
-              {request.tx_hash}
-            </code>
-          </div>
-        )}
+          {request.tx_hash && (
+            <div>
+              <span className="font-semibold text-primary/80">Tx:</span>{" "}
+              <code className="bg-contrast px-1 py-0.5 rounded text-primary font-mono break-all">
+                {truncateAddress(request.tx_hash, 10, 8)}
+              </code>
+            </div>
+          )}
 
-        {request.escrow_contract_address && (
-          <div>
-            <span className="font-semibold">Escrow:</span>{" "}
-            <code className="bg-contrast px-1 py-0.5 rounded text-xs text-primary font-mono">
-              {request.escrow_contract_address}
-            </code>
-          </div>
-        )}
+          {request.escrow_contract_address && (
+            <div>
+              <span className="font-semibold">Escrow:</span>{" "}
+              <code className="bg-contrast px-1 py-0.5 rounded text-xs text-primary font-mono">
+                {truncateAddress(request.escrow_contract_address)}
+              </code>
+            </div>
+          )}
+        </div>
 
         {request.error_message && (
           <div className="text-error">
@@ -194,20 +221,6 @@ export default function ResourceRequestCard({
             {request.error_message}
           </div>
         )}
-
-        {countdown && (
-          <div className="flex items-center gap-2">
-            <Clock size={14} className="text-primary/80" />
-            <span className="font-semibold text-primary/80">
-              Next Deadline:
-            </span>
-            <span className="text-primary font-mono">{countdown}</span>
-          </div>
-        )}
-
-        <div className="text-primary/50">
-          {new Date(request.created_at).toLocaleString()}
-        </div>
       </div>
     </Link>
   );
