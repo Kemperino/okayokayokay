@@ -1,12 +1,37 @@
 'use server';
 
-import { getRequestStatus, RequestStatusLabels, RequestStatus } from '@/lib/contracts';
+import { getRequestStatus, getRequestDetails, RequestStatusLabels, RequestStatus } from '@/lib/contracts';
 import type { Hex, Address } from 'viem';
 
 export interface ContractStatusResult {
   status: RequestStatus | null;
   statusLabel: string;
   hasStatus: boolean;
+}
+
+type RequestDetailsResult = Awaited<ReturnType<typeof getRequestDetails>>;
+
+const requestDetailsCache = new Map<string, Promise<RequestDetailsResult>>();
+
+function getRequestCacheKey(requestId: Hex, escrowAddress: Address): string {
+  return `${escrowAddress.toLowerCase()}:${requestId.toLowerCase()}`;
+}
+
+async function getCachedRequestDetails(requestId: Hex, escrowAddress: Address): Promise<RequestDetailsResult> {
+  const key = getRequestCacheKey(requestId, escrowAddress);
+  let cached = requestDetailsCache.get(key);
+
+  if (!cached) {
+    cached = getRequestDetails(requestId, escrowAddress);
+    requestDetailsCache.set(key, cached);
+  }
+
+  try {
+    return await cached;
+  } catch (error) {
+    requestDetailsCache.delete(key);
+    throw error;
+  }
 }
 
 /**
@@ -60,6 +85,118 @@ export async function getContractStatus(
       statusLabel: 'Error fetching',
       hasStatus: false,
     };
+  }
+}
+
+/**
+ * Check if a buyer can open a dispute for a given request.
+ * Calls the on-chain `requests` mapping and checks that the status is Escrowed
+ * and the dispute window (nextDeadline) has not yet passed.
+ */
+export async function canOpenDispute(
+  requestId: string,
+  escrowContractAddress: string | null
+): Promise<boolean> {
+  if (!escrowContractAddress) {
+    return false;
+  }
+
+  try {
+    const requestIdHex = requestId.startsWith('0x') ? (requestId as Hex) : (`0x${requestId}` as Hex);
+
+    console.log('[canOpenDispute] Fetching request from contract:', {
+      requestId: requestIdHex,
+      escrowAddress: escrowContractAddress,
+    });
+
+    const request = await getCachedRequestDetails(requestIdHex, escrowContractAddress as Address);
+
+    if (!request) {
+      return false;
+    }
+
+    const currentTime = BigInt(Math.floor(Date.now() / 1000));
+
+    return request.status === RequestStatus.Escrowed && currentTime < request.nextDeadline;
+  } catch (error) {
+    console.error('[canOpenDispute] Error checking if dispute can be opened:', error);
+    return false;
+  }
+}
+
+/**
+ * Check if a buyer can escalate an existing dispute.
+ * Returns true when the request is in DisputeOpened status, the seller has rejected,
+ * and the escalation deadline (nextDeadline) has not yet passed.
+ */
+export async function canEscalateDispute(
+  requestId: string,
+  escrowContractAddress: string | null
+): Promise<boolean> {
+  if (!escrowContractAddress) {
+    return false;
+  }
+
+  try {
+    const requestIdHex = requestId.startsWith('0x') ? (requestId as Hex) : (`0x${requestId}` as Hex);
+
+    console.log('[canEscalateDispute] Fetching request from contract:', {
+      requestId: requestIdHex,
+      escrowAddress: escrowContractAddress,
+    });
+
+    const request = await getCachedRequestDetails(requestIdHex, escrowContractAddress as Address);
+
+    if (!request) {
+      return false;
+    }
+
+    const currentTime = BigInt(Math.floor(Date.now() / 1000));
+
+    return (
+      request.status === RequestStatus.DisputeOpened &&
+      request.sellerRejected === true &&
+      currentTime <= request.nextDeadline
+    );
+  } catch (error) {
+    console.error('[canEscalateDispute] Error checking if dispute can be escalated:', error);
+    return false;
+  }
+}
+
+/**
+ * Check if a buyer can cancel an existing dispute.
+ * Returns true when the request is in DisputeOpened or DisputeEscalated status.
+ */
+export async function canCancelDispute(
+  requestId: string,
+  escrowContractAddress: string | null
+): Promise<boolean> {
+  if (!escrowContractAddress) {
+    return false;
+  }
+
+  try {
+    const requestIdHex = requestId.startsWith('0x') ? (requestId as Hex) : (`0x${requestId}` as Hex);
+
+    console.log('[canCancelDispute] Fetching request from contract:', {
+      requestId: requestIdHex,
+      escrowAddress: escrowContractAddress,
+    });
+
+    const request = await getCachedRequestDetails(requestIdHex, escrowContractAddress as Address);
+
+    if (!request) {
+      return false;
+    }
+
+    return (
+      request.status === RequestStatus.DisputeOpened ||
+      request.status === RequestStatus.DisputeEscalated
+    );
+  } catch (error) {
+    console.error('[canCancelDispute] Error checking if dispute can be cancelled:', error);
+    return false;
   }
 }
 
