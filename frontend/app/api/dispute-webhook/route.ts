@@ -52,8 +52,13 @@ export async function POST(request: NextRequest) {
     console.log('Dispute webhook - Processing result:', {
       success: result.success,
       hasMessage: !!result.message,
+      isDuplicate: result.message?.includes('already resolved'),
       resultKeys: Object.keys(result)
     });
+
+    if (result.message?.includes('already resolved')) {
+      console.log('Returning 200 for duplicate webhook (idempotent response)');
+    }
 
     return NextResponse.json(result, {
       status: result.success ? 200 : 500

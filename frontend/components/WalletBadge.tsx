@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getOrCreateSessionId } from "@/lib/session-manager";
 import Link from "next/link";
+import CopyButton from "./CopyButton";
 
 interface WalletInfo {
   walletAddress: string;
@@ -108,10 +109,14 @@ export function WalletBadge() {
       </svg>
 
       {/* Address & Balance */}
-      <div className="flex flex-col">
-        <span className="text-xs font-mono text-primary/70">
-          {truncateAddress(walletInfo.walletAddress)}
-        </span>
+      <div className="flex flex-col gap-1">
+        <div className="text-xs">
+          <CopyButton 
+            value={walletInfo.walletAddress}
+            showFullValue={false}
+            className="text-xs"
+          />
+        </div>
         <span
           className={`text-xs font-semibold ${
             hasBalance ? "text-success" : "text-primary/50"

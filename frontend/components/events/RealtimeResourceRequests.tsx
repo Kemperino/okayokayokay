@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import ContractStatusBadge from '../ContractStatusBadge';
+import ContractStatusBadgeClient from '../ContractStatusBadgeClient';
+import CopyButton from '../CopyButton';
 
 type ResourceRequest = {
   request_id: string;
@@ -96,35 +97,41 @@ export function RealtimeResourceRequests() {
           }`}
         >
           <div className="flex justify-between items-start mb-3">
-            <div>
-              <div className="font-mono text-xs text-primary/70 mb-1">
+            <div className="flex-1">
+              <div className="font-mono text-xs text-primary/70 mb-2">
                 {request.resource_url || request.input_data?.path || 'Request'}
               </div>
-              <div className="text-sm text-primary">
-                <span className="text-primary/60">User:</span>{' '}
-                <span className="font-mono text-xs">
-                  {request.user_address.slice(0, 10)}...
-                </span>
+              <div className="mb-2">
+                <CopyButton 
+                  value={request.user_address}
+                  label="User:"
+                  showFullValue={true}
+                />
               </div>
               {request.seller_address && (
-                <div className="text-sm text-primary">
-                  <span className="text-primary/60">Seller:</span>{' '}
-                  <span className="font-mono text-xs">
-                    {request.seller_address.slice(0, 10)}...
-                  </span>
+                <div className="mb-2">
+                  <CopyButton 
+                    value={request.seller_address}
+                    label="Seller:"
+                    showFullValue={true}
+                  />
+                </div>
+              )}
+              {request.tx_hash && (
+                <div className="mb-2">
+                  <CopyButton 
+                    value={request.tx_hash}
+                    label="TX:"
+                    showFullValue={true}
+                  />
                 </div>
               )}
             </div>
             <div className="flex flex-col items-end gap-2">
-              <ContractStatusBadge
+              <ContractStatusBadgeClient
                 requestId={request.request_id}
                 escrowContractAddress={request.escrow_contract_address}
               />
-              {request.tx_hash && (
-                <span className="text-xs text-primary/50">
-                  TX: {request.tx_hash.slice(0, 8)}...
-                </span>
-              )}
             </div>
           </div>
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getPaginatedResourceRequests } from "@/lib/queries/resources.server";
 import ResourceRequestHistory from "@/components/ResourceRequestHistory";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { batchGetRequestData } from "@/lib/contracts/multicall-batch";
 
 interface PageProps {
   searchParams: Promise<{ page?: string }>;
@@ -18,6 +19,15 @@ export default async function Home({ searchParams }: PageProps) {
     count,
     totalPages,
   } = await getPaginatedResourceRequests(currentPage, pageSize);
+
+  const batchData = requests
+    ? await batchGetRequestData(
+        requests.map((req) => ({
+          requestId: req.request_id,
+          escrowContractAddress: req.escrow_contract_address,
+        }))
+      )
+    : new Map();
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
@@ -42,7 +52,7 @@ export default async function Home({ searchParams }: PageProps) {
             </p>
           </div>
 
-          <ResourceRequestHistory requests={requests} />
+          <ResourceRequestHistory requests={requests} batchData={batchData} />
 
           {/* Pagination Controls */}
           {totalPages > 1 && (

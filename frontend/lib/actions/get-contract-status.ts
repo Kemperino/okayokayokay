@@ -13,6 +13,8 @@ export interface ContractStatusResult {
   status: RequestStatus | null;
   statusLabel: string;
   hasStatus: boolean;
+  buyerRefunded?: boolean;
+  amount?: string;
 }
 
 type RequestDetailsResult = Awaited<ReturnType<typeof getRequestDetails>>;
@@ -99,15 +101,15 @@ export async function getContractStatus(
       escrowAddress: escrowContractAddress,
     });
 
-    // Fetch status from blockchain
-    const status = await getRequestStatus(
+    // Fetch full request details to get buyerRefunded field
+    const request = await getCachedRequestDetails(
       requestIdHex,
       escrowContractAddress as Address
     );
 
-    console.log("[getContractStatus] Contract returned status:", status);
+    console.log("[getContractStatus] Contract returned request:", request);
 
-    if (status === null) {
+    if (!request) {
       return {
         status: null,
         statusLabel: "Not found",
@@ -116,9 +118,11 @@ export async function getContractStatus(
     }
 
     return {
-      status,
-      statusLabel: RequestStatusLabels[status],
+      status: request.status,
+      statusLabel: RequestStatusLabels[request.status],
       hasStatus: true,
+      buyerRefunded: request.buyerRefunded,
+      amount: request.amount?.toString(),
     };
   } catch (error) {
     console.error("[getContractStatus] Error fetching contract status:", error);
@@ -234,7 +238,16 @@ export async function canEscalateDispute(
 
 /**
  * Check if a buyer can cancel an existing dispute.
- * Returns true when the request is in DisputeOpened, DisputeRejected, or DisputeEscalated status.
+ * 
+ * Can cancel when:
+ * - DisputeOpened: Buyer opened dispute, seller hasn't responded yet
+ * - DisputeRejected: Seller rejected the refund request
+ * - DisputeEscalated: Dispute was escalated to agent but not yet resolved
+ * 
+ * Cannot cancel when:
+ * - SellerAccepted: Seller already accepted refund, automatic processing
+ * - DisputeResolved: Agent already resolved the dispute
+ * - Any other status: No active dispute to cancel
  */
 export async function canCancelDispute(
   requestId: string,
@@ -260,6 +273,16 @@ export async function canCancelDispute(
     );
 
     if (!request) {
+      return false;
+    }
+
+    if (request.status === RequestStatus.SellerAccepted) {
+      console.log("[canCancelDispute] Cannot cancel: seller already accepted refund");
+      return false;
+    }
+
+    if (request.status === RequestStatus.DisputeResolved) {
+      console.log("[canCancelDispute] Cannot cancel: dispute already resolved");
       return false;
     }
 
