@@ -30,6 +30,7 @@ export interface ResourceRequest {
   resource_url: string | null;
   status: string;
   error_message: string | null;
+  escrow_contract_address: string | null;
   created_at: string;
   completed_at: string | null;
 }

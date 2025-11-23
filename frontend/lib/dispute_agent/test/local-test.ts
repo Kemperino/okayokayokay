@@ -9,9 +9,9 @@ import {
   mockServiceMetadata,
   testScenarios
 } from './mock-data';
-import { validateWebhookEvent } from '../lib/validator';
-import { makeDisputeDecision } from '../lib/llm';
-import { DisputeContext } from '../types';
+import { validateWebhookEvent } from '../validator';
+import { makeDisputeDecision } from '../llm';
+import { DisputeContext } from '../types/index';
 
 // Load environment variables
 dotenv.config();
@@ -75,7 +75,7 @@ async function testLLMDecision(scenario: string = 'serviceFailed') {
     requestId: mockWebhookEvent.args.requestId,
     contractAddress: mockWebhookEvent.contractAddress,
     serviceRequest: mockServiceRequest,
-    apiResponseData: testCase.apiResponse,
+    resourceRequestData: testCase.apiResponse,
     serviceMetadata: mockServiceMetadata
   };
 

@@ -1,5 +1,7 @@
 'use client';
 
+import ContractStatusBadge from './ContractStatusBadge';
+
 interface ResourceRequest {
   request_id: string;
   input_data: any;
@@ -11,6 +13,7 @@ interface ResourceRequest {
   resource_url: string | null;
   status: string;
   error_message: string | null;
+  escrow_contract_address: string | null;
   created_at: string;
   completed_at: string | null;
 }
@@ -28,18 +31,6 @@ export default function ResourceRequestHistory({
     );
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'paid':
-        return 'bg-blue-100 text-blue-800';
-      case 'failed':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   // Extract description from seller_description (x402 well-known data)
   const getSellerDescription = (sellerDescription: any): string | null => {
@@ -82,13 +73,12 @@ export default function ResourceRequestHistory({
                   {path}
                 </div>
               </div>
-              <span
-                className={`ml-3 px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${getStatusColor(
-                  request.status
-                )}`}
-              >
-                {request.status.toUpperCase()}
-              </span>
+              <div className="ml-3">
+                <ContractStatusBadge
+                  requestId={request.request_id}
+                  escrowContractAddress={request.escrow_contract_address}
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-xs">
@@ -115,6 +105,16 @@ export default function ResourceRequestHistory({
                   <span className="font-semibold">Tx:</span>{' '}
                   <code className="bg-gray-100 px-1 py-0.5 rounded">
                     {request.tx_hash.slice(0, 10)}...{request.tx_hash.slice(-8)}
+                  </code>
+                </div>
+              )}
+
+              {request.escrow_contract_address && (
+                <div className="col-span-2">
+                  <span className="font-semibold">Escrow:</span>{' '}
+                  <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">
+                    {request.escrow_contract_address.slice(0, 8)}...
+                    {request.escrow_contract_address.slice(-6)}
                   </code>
                 </div>
               )}

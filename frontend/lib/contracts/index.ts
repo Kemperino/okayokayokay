@@ -37,13 +37,13 @@ export {
   cancelDispute,
 } from './dispute-actions';
 
-// Merchant actions (wagmi)
-export {
-  respondToDispute,
-  releaseEscrow,
-  batchReleaseEscrow,
-  canMerchantRespondToDispute,
-} from './merchant-actions';
+// Merchant actions (wagmi) - TODO: Re-implement when needed
+// export {
+//   respondToDispute,
+//   releaseEscrow,
+//   batchReleaseEscrow,
+//   canMerchantRespondToDispute,
+// } from './merchant-actions';
 
 // Status queries (read-only)
 export {
@@ -58,6 +58,9 @@ export {
   batchGetRequestStatuses,
   batchGetRequestDetails,
 } from './status-queries';
+
+// Helpers
+export { getEscrowAddressForMerchant, toChecksumAddress } from './helpers';
 
 // Legacy exports for backward compatibility
 export {

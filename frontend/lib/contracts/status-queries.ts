@@ -21,18 +21,20 @@ import {
 } from './types';
 
 // Create a public client for reading from the blockchain
+// Use BASE_RPC_URL (server-side) or NEXT_PUBLIC_BASE_RPC_URL (client-side)
 const publicClient = createPublicClient({
   chain: base,
-  transport: http(process.env.NEXT_PUBLIC_BASE_RPC_URL || undefined),
+  transport: http(process.env.BASE_RPC_URL || process.env.NEXT_PUBLIC_BASE_RPC_URL || undefined),
 });
 
 /**
  * Get the factory contract address from environment
+ * Returns null if not configured
  */
-function getFactoryAddress(): Address {
+function getFactoryAddress(): Address | null {
   const address = process.env.NEXT_PUBLIC_DISPUTE_ESCROW_FACTORY_ADDRESS;
   if (!address) {
-    throw new Error('NEXT_PUBLIC_DISPUTE_ESCROW_FACTORY_ADDRESS not set');
+    return null;
   }
   return address as Address;
 }
@@ -44,6 +46,11 @@ function getFactoryAddress(): Address {
 export async function getEscrowAddressForService(serviceAddress: Address): Promise<Address | null> {
   try {
     const factoryAddress = getFactoryAddress();
+
+    // If factory is not configured, return null
+    if (!factoryAddress) {
+      return null;
+    }
 
     const escrowAddress = await publicClient.readContract({
       address: factoryAddress,
@@ -144,6 +151,11 @@ export async function getRequestStatus(
   escrowAddress: Address
 ): Promise<RequestStatus | null> {
   try {
+    console.log('[getRequestStatus] Calling contract.getRequestStatus:', {
+      address: escrowAddress,
+      requestId,
+    });
+
     const status = await publicClient.readContract({
       address: escrowAddress,
       abi: DisputeEscrowABI,
@@ -151,9 +163,11 @@ export async function getRequestStatus(
       args: [requestId],
     });
 
+    console.log('[getRequestStatus] Raw status returned:', status, 'Type:', typeof status);
+
     return status as RequestStatus;
   } catch (error) {
-    console.error('Error reading request status from contract:', error);
+    console.error('[getRequestStatus] Error reading request status from contract:', error);
     return null;
   }
 }

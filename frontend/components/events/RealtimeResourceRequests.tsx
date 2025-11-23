@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
+import ContractStatusBadge from '../ContractStatusBadge';
 
 type ResourceRequest = {
   request_id: string;
@@ -14,6 +15,7 @@ type ResourceRequest = {
   resource_url: string | null;
   status: string;
   error_message: string | null;
+  escrow_contract_address: string | null;
   created_at: string;
   completed_at: string | null;
 };
@@ -113,20 +115,11 @@ export function RealtimeResourceRequests() {
                 </div>
               )}
             </div>
-            <div className="flex flex-col items-end gap-1">
-              <span
-                className={`px-2 py-1 text-xs font-semibold rounded ${
-                  request.status === 'completed'
-                    ? 'bg-green-100 text-green-800'
-                    : request.status === 'paid'
-                    ? 'bg-blue-100 text-blue-800'
-                    : request.status === 'pending'
-                    ? 'bg-yellow-100 text-yellow-800'
-                    : 'bg-red-100 text-red-800'
-                }`}
-              >
-                {request.status}
-              </span>
+            <div className="flex flex-col items-end gap-2">
+              <ContractStatusBadge
+                requestId={request.request_id}
+                escrowContractAddress={request.escrow_contract_address}
+              />
               {request.tx_hash && (
                 <span className="text-xs text-gray-500">
                   TX: {request.tx_hash.slice(0, 8)}...
