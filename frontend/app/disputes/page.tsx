@@ -30,7 +30,8 @@ export default async function DisputesPage({ searchParams }: PageProps) {
         </p>
       </div>
 
-      <BuyerDisputesWrapper contractAddress={contractAddress} />
+      {/* TODO: Put that in the dashboard  */}
+      {/* <BuyerDisputesWrapper contractAddress={contractAddress} /> */}
     </div>
   );
 }
