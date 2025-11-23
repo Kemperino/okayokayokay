@@ -34,7 +34,7 @@ export function MobileHeader() {
                 className="rounded"
               />
               <span className="text-[#41EAD4] font-dalfitra text-2xl">
-                okay3
+                OkayOkayOkay
               </span>
             </Link>
             <div className="flex items-center gap-4">
@@ -141,7 +141,9 @@ export function DesktopSidebar() {
             height={48}
             className="rounded"
           />
-          <span className="text-[#41EAD4] font-dalfitra text-xl">okay3</span>
+          <span className="text-[#41EAD4] font-dalfitra text-xl">
+            OkayOkayOkay
+          </span>
         </Link>
       </div>
 
