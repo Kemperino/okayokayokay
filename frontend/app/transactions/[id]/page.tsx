@@ -1,6 +1,7 @@
 import { getResourceRequestById } from "@/lib/queries/resources.server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import TransactionDetailClient from "@/components/TransactionDetailClient";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -198,6 +199,12 @@ export default async function TransactionDetailPage({ params }: PageProps) {
           </div>
         )}
       </div>
+
+      {/* Dispute Actions */}
+      <TransactionDetailClient
+        requestId={request.request_id}
+        escrowContractAddress={request.escrow_contract_address}
+      />
     </div>
   );
 }

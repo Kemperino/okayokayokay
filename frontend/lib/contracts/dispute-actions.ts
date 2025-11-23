@@ -29,12 +29,21 @@ export async function openDispute(
     // Get CDP account for this session
     const account = await getAnonymousCdpAccount(sessionId);
 
+    console.log('[openDispute] Transaction details:', {
+      from: account.address,
+      to: params.escrowAddress,
+      requestId: params.requestId,
+      network: 'base',
+    });
+
     // Encode the transaction data
     const data = encodeFunctionData({
       abi: DisputeEscrowABI,
       functionName: 'openDispute',
-      args: [params.requestId, params.claimDescription ?? ''],
+      args: [params.requestId],
     });
+
+    console.log('[openDispute] Encoded data:', data);
 
     // Send transaction via CDP
     const txResult = await cdpClient.evm.sendTransaction({
@@ -46,12 +55,19 @@ export async function openDispute(
       },
     });
 
+    console.log('[openDispute] Transaction submitted:', txResult.transactionHash);
+
     return {
       success: true,
       transactionHash: txResult.transactionHash as Hex,
     };
   } catch (error) {
-    console.error('Error opening dispute:', error);
+    console.error('[openDispute] Error details:', {
+      error,
+      sessionId,
+      requestId: params.requestId,
+      escrowAddress: params.escrowAddress,
+    });
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
