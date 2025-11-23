@@ -26,10 +26,18 @@ export async function makeX402RequestForSession(
   options?: RequestInit
 ): Promise<X402PaymentResult> {
   try {
+    console.log('[x402] Getting CDP account for session:', sessionId);
     const cdpAccount = await getAnonymousCdpAccount(sessionId);
+    console.log('[x402] CDP account obtained:', cdpAccount.address);
+
     const signer = toAccount(cdpAccount);
+    console.log('[x402] Created signer from CDP account');
+
     const x402Fetch = wrapFetchWithPayment(fetch, signer);
+    console.log('[x402] Making x402 fetch to:', url);
+
     const response = await x402Fetch(url, options);
+    console.log('[x402] Response status:', response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -117,6 +125,9 @@ export async function makeX402RequestForSession(
       paymentDetails,
     };
   } catch (err) {
+    console.error('[x402] Error in makeX402RequestForSession:', err);
+    console.error('[x402] Error stack:', err instanceof Error ? err.stack : 'No stack');
+
     return {
       success: false,
       error: err instanceof Error ? err.message : 'Failed to get session wallet',

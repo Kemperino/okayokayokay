@@ -10,6 +10,7 @@
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status",
+    "test:dispute": "tsx scripts/test-dispute-agent.ts",
     "supabase:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > lib/supabase/database.types.ts",
     "seed:resources": "tsx scripts/seed-resources.ts",

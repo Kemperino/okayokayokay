@@ -6,7 +6,7 @@ import "../src/DisputeEscrowFactory.sol";
 
 contract RegisterServiceScript is Script {
     function run() external {
-        uint256 privateKey = vm.envUint("PRIVATE_KEY");
+        uint256 privateKey = vm.envUint("SERVICE_PRIVATE_KEY");
         address factoryAddress = vm.envAddress("FACTORY_ADDRESS");
 
         // Service metadata

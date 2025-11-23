@@ -11,7 +11,13 @@ export interface ContractStatusResult {
 
 type RequestDetailsResult = Awaited<ReturnType<typeof getRequestDetails>>;
 
-const requestDetailsCache = new Map<string, Promise<RequestDetailsResult>>();
+interface CacheEntry {
+  promise: Promise<RequestDetailsResult>;
+  timestamp: number;
+}
+
+const requestDetailsCache = new Map<string, CacheEntry>();
+const CACHE_TTL = 5000; // 5 seconds cache TTL
 
 function getRequestCacheKey(requestId: Hex, escrowAddress: Address): string {
   return `${escrowAddress.toLowerCase()}:${requestId.toLowerCase()}`;
@@ -19,19 +25,38 @@ function getRequestCacheKey(requestId: Hex, escrowAddress: Address): string {
 
 async function getCachedRequestDetails(requestId: Hex, escrowAddress: Address): Promise<RequestDetailsResult> {
   const key = getRequestCacheKey(requestId, escrowAddress);
-  let cached = requestDetailsCache.get(key);
+  const now = Date.now();
+  const cached = requestDetailsCache.get(key);
 
-  if (!cached) {
-    cached = getRequestDetails(requestId, escrowAddress);
-    requestDetailsCache.set(key, cached);
+  // Use cache only if it's less than 5 seconds old
+  if (cached && (now - cached.timestamp) < CACHE_TTL) {
+    try {
+      return await cached.promise;
+    } catch (error) {
+      requestDetailsCache.delete(key);
+      throw error;
+    }
   }
 
+  // Fetch fresh data
+  const promise = getRequestDetails(requestId, escrowAddress);
+  requestDetailsCache.set(key, { promise, timestamp: now });
+
   try {
-    return await cached;
+    return await promise;
   } catch (error) {
     requestDetailsCache.delete(key);
     throw error;
   }
+}
+
+/**
+ * Clear the cache for a specific request (useful after transactions)
+ */
+export async function clearRequestCache(requestId: string, escrowAddress: string) {
+  const key = `${escrowAddress.toLowerCase()}:${requestId.toLowerCase()}`;
+  requestDetailsCache.delete(key);
+  console.log('[clearRequestCache] Cleared cache for:', key);
 }
 
 /**
@@ -126,8 +151,9 @@ export async function canOpenDispute(
 
 /**
  * Check if a buyer can escalate an existing dispute.
- * Returns true when the request is in DisputeOpened status, the seller has rejected,
- * and the escalation deadline (nextDeadline) has not yet passed.
+ * Returns true when the request is in DisputeOpened status AND either:
+ * 1. Seller didn't respond and deadline passed, OR
+ * 2. Seller rejected and buyer is within escalation deadline
  */
 export async function canEscalateDispute(
   requestId: string,
@@ -151,13 +177,24 @@ export async function canEscalateDispute(
       return false;
     }
 
+    if (request.status !== RequestStatus.DisputeOpened) {
+      return false;
+    }
+
     const currentTime = BigInt(Math.floor(Date.now() / 1000));
 
-    return (
-      request.status === RequestStatus.DisputeOpened &&
-      request.sellerRejected === true &&
-      currentTime <= request.nextDeadline
-    );
+    // Can escalate if:
+    // 1. Seller didn't respond (sellerRejected = false) and deadline passed
+    if (!request.sellerRejected && currentTime > request.nextDeadline) {
+      return true;
+    }
+
+    // 2. Seller rejected and buyer is within escalation deadline
+    if (request.sellerRejected && currentTime <= request.nextDeadline) {
+      return true;
+    }
+
+    return false;
   } catch (error) {
     console.error('[canEscalateDispute] Error checking if dispute can be escalated:', error);
     return false;

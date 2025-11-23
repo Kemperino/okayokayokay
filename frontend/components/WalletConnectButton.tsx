@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
+import Image from 'next/image';
 
 export function WalletConnectButton() {
   const { address, isConnected } = useAccount();
@@ -72,7 +73,7 @@ export function WalletConnectButton() {
                   className="px-6 py-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition font-medium flex items-center gap-3"
                 >
                   {connector.icon && (
-                    <img src={connector.icon} alt={connector.name} className="w-8 h-8" />
+                    <Image src={connector.icon} alt={connector.name} width={32} height={32} className="w-8 h-8" />
                   )}
                   <span className="flex-1 text-left">{connector.name}</span>
                   <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

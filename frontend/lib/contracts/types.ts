@@ -45,7 +45,6 @@ export interface TransactionResult {
 export interface OpenDisputeParams {
   requestId: Hex;
   escrowAddress: Address;
-  claimDescription?: string;
 }
 
 /**

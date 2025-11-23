@@ -268,9 +268,9 @@ contract DisputeEscrowTest is Test {
         emit DisputeResponded(REQUEST_ID_1, false);
         escrow.respondToDispute(REQUEST_ID_1, false);
 
-        // Check status remains DisputeOpened for escalation
+        // Check status is now DisputeRejected
         (,,,, DisputeEscrow.RequestStatus status,,, bool buyerRefunded, bool sellerRejected) = escrow.requests(REQUEST_ID_1);
-        assertEq(uint(status), uint(DisputeEscrow.RequestStatus.DisputeOpened));
+        assertEq(uint(status), uint(DisputeEscrow.RequestStatus.DisputeRejected));
         assertFalse(buyerRefunded);
         assertTrue(sellerRejected);
 
@@ -444,6 +444,30 @@ contract DisputeEscrowTest is Test {
         assertEq(usdc.balanceOf(serviceProvider), sellerBalanceBefore + ESCROW_AMOUNT);
     }
 
+    function testCancelRejectedDispute() public {
+        // Setup and open dispute
+        _setupDisputedEscrow();
+
+        // Seller rejects
+        vm.prank(serviceProvider);
+        escrow.respondToDispute(REQUEST_ID_1, false);
+
+        // Check status is DisputeRejected
+        assertEq(uint(escrow.getRequestStatus(REQUEST_ID_1)), uint(DisputeEscrow.RequestStatus.DisputeRejected));
+
+        // Buyer can cancel rejected dispute
+        vm.prank(buyer1);
+        vm.expectEmit(true, false, false, false);
+        emit DisputeCancelled(REQUEST_ID_1);
+        escrow.cancelDispute(REQUEST_ID_1);
+
+        // Check status back to escrowed
+        assertEq(uint(escrow.getRequestStatus(REQUEST_ID_1)), uint(DisputeEscrow.RequestStatus.Escrowed));
+
+        // Seller can now withdraw
+        escrow.releaseEscrow(REQUEST_ID_1);
+    }
+
     // ============ Balance Tracking Tests ============
 
     function testMultipleRequestsBalanceTracking() public {
@@ -517,6 +541,63 @@ contract DisputeEscrowTest is Test {
         vm.prank(serviceProvider);
         escrow.respondToDispute(REQUEST_ID_1, false);
         assertFalse(escrow.canSellerRespond(REQUEST_ID_1));
+    }
+
+    function testGetNextDeadline() public {
+        // Setup escrow
+        vm.prank(facilitator);
+        usdc.transfer(address(escrow), ESCROW_AMOUNT);
+
+        vm.prank(operator);
+        uint256 currentTime = block.timestamp;
+        escrow.confirmEscrow(REQUEST_ID_1, buyer1, ESCROW_AMOUNT, API_RESPONSE_HASH);
+
+        // Get deadline
+        uint256 deadline = escrow.getNextDeadline(REQUEST_ID_1);
+        assertEq(deadline, currentTime + escrow.escrowPeriod());
+
+        // Open dispute and check deadline changes
+        vm.prank(buyer1);
+        escrow.openDispute(REQUEST_ID_1);
+
+        uint256 newDeadline = escrow.getNextDeadline(REQUEST_ID_1);
+        assertEq(newDeadline, block.timestamp + escrow.disputePeriod());
+    }
+
+    function testIsDeadlinePassed() public {
+        // Setup escrow
+        vm.prank(facilitator);
+        usdc.transfer(address(escrow), ESCROW_AMOUNT);
+
+        vm.prank(operator);
+        escrow.confirmEscrow(REQUEST_ID_1, buyer1, ESCROW_AMOUNT, API_RESPONSE_HASH);
+
+        // Initially deadline should not have passed
+        assertFalse(escrow.isDeadlinePassed(REQUEST_ID_1));
+
+        // Fast forward to just before deadline
+        vm.warp(block.timestamp + escrow.escrowPeriod() - 1);
+        assertFalse(escrow.isDeadlinePassed(REQUEST_ID_1));
+
+        // Fast forward to exactly the deadline
+        vm.warp(block.timestamp + 1);
+        assertTrue(escrow.isDeadlinePassed(REQUEST_ID_1));
+
+        // Fast forward past deadline
+        vm.warp(block.timestamp + 100);
+        assertTrue(escrow.isDeadlinePassed(REQUEST_ID_1));
+    }
+
+    function testDeadlineHelperFunctionsWithNoRequest() public view {
+        // Test with non-existent request ID
+        bytes32 nonExistentId = keccak256("nonexistent");
+
+        // getNextDeadline should return 0 for non-existent request
+        uint256 deadline = escrow.getNextDeadline(nonExistentId);
+        assertEq(deadline, 0);
+
+        // isDeadlinePassed should return true (since 0 < block.timestamp)
+        assertTrue(escrow.isDeadlinePassed(nonExistentId));
     }
 
     // ============ Edge Cases & Security Tests ============

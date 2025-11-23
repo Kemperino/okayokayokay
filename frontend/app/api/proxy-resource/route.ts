@@ -55,9 +55,12 @@ export async function POST(req: NextRequest) {
 
     // Fetch .well-known/x402 data for seller description (cached)
     const wellKnownData = await fetchWellKnown(url.toString());
+    console.log('[proxy-resource] Well-known data:', wellKnownData ? 'fetched' : 'null');
 
     // Make x402 request using session's CDP wallet
+    console.log('[proxy-resource] Making x402 request to:', url.toString());
     const result = await makeX402RequestForSession(url.toString(), sessionId);
+    console.log('[proxy-resource] x402 request result:', result);
 
     if (!result.success) {
       const requestId = `failed-${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -115,8 +118,15 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     console.error('Error in proxy-resource API:', err);
+    console.error('Error stack:', err instanceof Error ? err.stack : 'No stack trace');
+
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error: 'Internal server error',
+        details: errorMessage,
+        stack: process.env.NODE_ENV === 'development' ? (err instanceof Error ? err.stack : undefined) : undefined
+      },
       { status: 500 }
     );
   }

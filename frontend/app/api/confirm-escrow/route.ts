@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callConfirmEscrow } from "@/lib/contracts/operator-actions";
+import { validateAlchemySignature } from "@/lib/alchemy/signature";
 import type { Address, Hex } from "viem";
 
 // USDC contract on Base
@@ -39,8 +40,22 @@ function cleanAddress(paddedAddress: string | undefined): string | null {
  */
 export async function POST(req: NextRequest) {
   try {
+    const signature = req.headers.get('x-alchemy-signature');
+    const bodyText = await req.text();
+
+    const signingKey = process.env.ALCHEMY_USDC_TRANSFER_SIGNING_KEY;
+    if (!signingKey) {
+      console.error('ALCHEMY_USDC_TRANSFER_SIGNING_KEY not configured');
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+
+    if (!validateAlchemySignature(bodyText, signature, signingKey)) {
+      console.error('Invalid Alchemy webhook signature for confirm-escrow');
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    }
+
     // Parse the webhook payload
-    const body = await req.json();
+    const body = JSON.parse(bodyText);
 
     // Extract block data from GraphQL response structure
     const block = body?.event?.data?.block ?? body?.data?.block ?? null;

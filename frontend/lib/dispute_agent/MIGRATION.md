@@ -59,7 +59,7 @@ Run the provided `supabase-schema.sql` in your Supabase SQL editor to create the
 Update your `.env.local` or `.env` file:
 ```env
 # Update RPC URL for Base Mainnet
-RPC_URL=https://base-mainnet.g.alchemy.com/v2/YOUR-API-KEY
+BASE_RPC_URL=https://base-mainnet.g.alchemy.com/v2/YOUR-API-KEY
 
 # Update Factory Contract Address for Base Mainnet
 FACTORY_CONTRACT_ADDRESS=0x...your-mainnet-factory-address

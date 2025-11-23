@@ -2,6 +2,8 @@
  * Utility for fetching and caching .well-known/x402 metadata from resources
  */
 
+import https from 'https';
+
 interface X402WellKnownResponse {
   x402Version: number;
   accepts: Array<{
@@ -71,14 +73,67 @@ export async function fetchWellKnown(
   // Fetch from network
   try {
     console.log(`[well-known] Fetching ${wellKnownUrl}`);
-    const response = await fetch(wellKnownUrl, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
-      // Set a reasonable timeout (10 seconds)
-      signal: AbortSignal.timeout(10000),
-    });
+
+    let response: Response;
+
+    // In development mode and server-side, use custom HTTPS handling
+    if (process.env.NODE_ENV === 'development' && typeof window === 'undefined') {
+      // For development: bypass SSL certificate verification using Node's https module
+      response = await new Promise((resolve, reject) => {
+        const url = new URL(wellKnownUrl);
+
+        const options = {
+          hostname: url.hostname,
+          port: url.port || 443,
+          path: url.pathname + url.search,
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          },
+          rejectUnauthorized: false, // Allow self-signed certificates in development
+        };
+
+        const req = https.request(options, (res) => {
+          let data = '';
+
+          res.on('data', (chunk) => {
+            data += chunk;
+          });
+
+          res.on('end', () => {
+            // Create a Response-like object
+            resolve(new Response(data, {
+              status: res.statusCode || 200,
+              statusText: res.statusMessage || 'OK',
+              headers: res.headers as any,
+            }));
+          });
+        });
+
+        req.on('error', (err) => {
+          reject(err);
+        });
+
+        // Set timeout
+        req.setTimeout(10000, () => {
+          req.destroy();
+          reject(new Error('Request timeout'));
+        });
+
+        req.end();
+      });
+    } else {
+      // Production mode or client-side: use regular fetch
+      const fetchOptions: RequestInit = {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+        signal: AbortSignal.timeout(10000),
+      };
+
+      response = await fetch(wellKnownUrl, fetchOptions);
+    }
 
     if (!response.ok) {
       console.error(
@@ -92,7 +147,38 @@ export async function fetchWellKnown(
       return null;
     }
 
-    const data = (await response.json()) as X402WellKnownResponse;
+    // Get the response text first to debug what we're receiving
+    const responseText = await response.text();
+
+    if (!responseText || responseText.trim() === '') {
+      console.error(
+        `[well-known] Empty response from ${wellKnownUrl}`
+      );
+      // Cache null result
+      wellKnownCache.set(baseUrl, {
+        data: null,
+        timestamp: Date.now(),
+      });
+      return null;
+    }
+
+    let data: X402WellKnownResponse;
+    try {
+      data = JSON.parse(responseText) as X402WellKnownResponse;
+    } catch (parseError) {
+      console.error(
+        `[well-known] Invalid JSON from ${wellKnownUrl}:`,
+        parseError,
+        'Response text:',
+        responseText.substring(0, 500) // Log first 500 chars for debugging
+      );
+      // Cache null result
+      wellKnownCache.set(baseUrl, {
+        data: null,
+        timestamp: Date.now(),
+      });
+      return null;
+    }
 
     // Validate response structure
     if (!data.x402Version || !Array.isArray(data.accepts)) {

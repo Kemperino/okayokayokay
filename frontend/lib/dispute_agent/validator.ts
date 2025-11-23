@@ -84,7 +84,7 @@ async function verifyEscrowContract(
   factoryAddress: string
 ): Promise<boolean> {
   try {
-    const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+    const provider = new ethers.JsonRpcProvider(process.env.BASE_RPC_URL);
 
     // Factory contract ABI (only the function we need)
     const factoryAbi = [
@@ -123,7 +123,7 @@ export async function validateAgentRole(
   contractAddress?: string
 ): Promise<RoleValidationResult> {
   try {
-    const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+    const provider = new ethers.JsonRpcProvider(process.env.BASE_RPC_URL);
     const factoryAddress = process.env.FACTORY_CONTRACT_ADDRESS;
 
     if (!factoryAddress) {
