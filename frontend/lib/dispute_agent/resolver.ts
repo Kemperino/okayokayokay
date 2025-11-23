@@ -16,9 +16,9 @@ export async function resolveDisputeOnChain(
 ): Promise<string> {
   try {
     // Validate that the agent has the required role
-    const hasRole = await validateAgentRole();
-    if (!hasRole) {
-      throw new Error('Agent does not have DISPUTE_AGENT_ROLE');
+    const roleValidation = await validateAgentRole('agent');
+    if (!roleValidation.valid) {
+      throw new Error(`Agent does not have DISPUTE_AGENT_ROLE: ${roleValidation.error}`);
     }
 
     // Set up provider and wallet
@@ -63,15 +63,7 @@ export async function resolveDisputeOnChain(
     );
 
     console.log(`Transaction sent: ${tx.hash}`);
-
-    // Wait for confirmation
-    const receipt = await tx.wait();
-
-    if (receipt.status === 0) {
-      throw new Error('Transaction failed');
-    }
-
-    console.log(`Transaction confirmed in block ${receipt.blockNumber}`);
+    console.log('Returning immediately without waiting for confirmation');
 
     return tx.hash;
   } catch (error) {

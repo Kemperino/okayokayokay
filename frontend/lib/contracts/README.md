@@ -243,12 +243,12 @@ Escrowed (1)
     ↓ (buyer opens dispute)
 DisputeOpened (3)
     ├─→ (seller accepts) → SellerAccepted (4) [FINAL - buyer refunded]
-    ├─→ (seller rejects) → buyer can escalate
+    ├─→ (seller rejects) → DisputeRejected (5) → buyer can escalate
     ├─→ (seller timeout) → buyer can escalate
     ↓ (buyer escalates)
-DisputeEscalated (5)
+DisputeEscalated (6)
     ↓ (agent decides)
-DisputeResolved (6) [FINAL - funds distributed]
+DisputeResolved (7) [FINAL - funds distributed]
 ```
 
 ## Key Deadlines
@@ -287,8 +287,9 @@ enum RequestStatus {
   EscrowReleased = 2,
   DisputeOpened = 3,
   SellerAccepted = 4,
-  DisputeEscalated = 5,
-  DisputeResolved = 6,
+  DisputeRejected = 5,
+  DisputeEscalated = 6,
+  DisputeResolved = 7,
 }
 ```
 

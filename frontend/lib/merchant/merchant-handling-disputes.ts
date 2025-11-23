@@ -1,7 +1,30 @@
 import { handleDispute } from "./dispute-handler";
 import { ethers } from "ethers";
+import { DisputeEscrowABI } from '@/lib/contracts/DisputeEscrowABI';
 
-export interface WebhookEvent {
+// Alchemy GraphQL webhook format
+export interface AlchemyWebhookPayload {
+  webhookId: string;
+  type: 'GRAPHQL';
+  event: {
+    data: {
+      block: {
+        logs: Array<{
+          account: { address: string };
+          topics: string[];
+          data: string;
+          transaction: {
+            hash: string;
+          };
+        }>;
+      };
+    };
+    network: string;
+  };
+}
+
+// Legacy test webhook format
+export interface LegacyWebhookEvent {
   event: string;
   contractAddress: string;
   transactionHash: string;
@@ -13,6 +36,8 @@ export interface WebhookEvent {
     amount?: string;
   };
 }
+
+export type WebhookEvent = AlchemyWebhookPayload | LegacyWebhookEvent;
 
 export interface WebhookResult {
   success: boolean;
@@ -26,9 +51,19 @@ export interface WebhookResult {
   message?: string;
 }
 
+const DISPUTE_OPENED_SIGNATURE = ethers.id('DisputeOpened(bytes32,address)');
+
+/**
+ * Check if payload is Alchemy GraphQL format
+ */
+function isAlchemyWebhook(payload: WebhookEvent): payload is AlchemyWebhookPayload {
+  return 'webhookId' in payload && 'event' in payload && typeof payload.event === 'object';
+}
+
 /**
  * Merchant webhook handler for responding to dispute events
  * Makes a random 50/50 decision to accept or reject the dispute
+ * Supports both Alchemy GraphQL webhooks and legacy test format
  */
 export async function merchantHandlingDisputes(
   payload: WebhookEvent
@@ -36,30 +71,90 @@ export async function merchantHandlingDisputes(
   console.log("Processing merchant dispute webhook:", new Date().toISOString());
 
   try {
-    // 1. Basic validation
-    if (!payload.event) {
-      return { success: false, error: "Missing event type" };
-    }
+    let requestId: string;
+    let contractAddress: string;
 
-    if (!payload.contractAddress) {
-      return { success: false, error: "Missing contract address" };
-    }
+    // Parse based on webhook format
+    if (isAlchemyWebhook(payload)) {
+      console.log('Parsing Alchemy GraphQL webhook format');
+      
+      // Validate Alchemy payload structure
+      if (!payload.event?.data?.block?.logs) {
+        return { 
+          success: true, 
+          message: "No logs in webhook payload" 
+        };
+      }
 
-    if (!payload.args?.requestId) {
-      return { success: false, error: "Missing request ID" };
-    }
+      const logs = payload.event.data.block.logs;
+      
+      if (logs.length === 0) {
+        return { 
+          success: true, 
+          message: "No logs to process" 
+        };
+      }
 
-    // 2. Only process DisputeOpened events
-    if (payload.event !== "DisputeOpened") {
-      console.log(`Ignoring event type: ${payload.event}`);
-      return {
-        success: true,
-        message: "Event type not handled",
-      };
-    }
+      // Find DisputeOpened event
+      let disputeLog = null;
+      for (const log of logs) {
+        if (log.topics[0] === DISPUTE_OPENED_SIGNATURE) {
+          disputeLog = log;
+          break;
+        }
+      }
 
-    const { requestId } = payload.args;
-    const { contractAddress } = payload;
+      if (!disputeLog) {
+        console.log('No DisputeOpened event found in logs');
+        return {
+          success: true,
+          message: "No DisputeOpened event in payload"
+        };
+      }
+
+      // Decode the event
+      const iface = new ethers.Interface(DisputeEscrowABI);
+      const decoded = iface.parseLog({
+        topics: disputeLog.topics,
+        data: disputeLog.data,
+      });
+
+      if (!decoded) {
+        return { success: false, error: "Failed to decode DisputeOpened event" };
+      }
+
+      requestId = decoded.args[0];
+      contractAddress = disputeLog.account.address;
+
+      console.log(`Decoded Alchemy webhook: requestId=${requestId}, contract=${contractAddress}`);
+    } else {
+      // Legacy test format
+      console.log('Parsing legacy test webhook format');
+      
+      if (!payload.event) {
+        return { success: false, error: "Missing event type" };
+      }
+
+      if (!payload.contractAddress) {
+        return { success: false, error: "Missing contract address" };
+      }
+
+      if (!payload.args?.requestId) {
+        return { success: false, error: "Missing request ID" };
+      }
+
+      // Only process DisputeOpened events
+      if (payload.event !== "DisputeOpened") {
+        console.log(`Ignoring event type: ${payload.event}`);
+        return {
+          success: true,
+          message: "Event type not handled",
+        };
+      }
+
+      requestId = payload.args.requestId;
+      contractAddress = payload.contractAddress;
+    }
 
     // 3. Validate addresses and request ID format
     if (!ethers.isAddress(contractAddress)) {

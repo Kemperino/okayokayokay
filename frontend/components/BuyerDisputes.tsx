@@ -8,6 +8,7 @@ import {
 } from '@/lib/contracts/DisputeEscrowContract';
 import { RequestStatus, RequestStatusLabels } from '@/lib/contracts/DisputeEscrowABI';
 import type { DisputeStatus } from '@/lib/queries/transactions.server';
+import CopyButton from './CopyButton';
 
 interface Transaction {
   request_id: string;
@@ -224,9 +225,13 @@ export default function BuyerDisputes({
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-3 flex-1">
                     {getStatusIcon(tx.status)}
-                    <div>
-                      <div className="text-sm font-semibold text-primary mb-1">
-                        Request ID: {tx.request_id.slice(0, 16)}...
+                    <div className="flex-1">
+                      <div className="mb-1">
+                        <CopyButton 
+                          value={tx.request_id}
+                          label="Request ID:"
+                          showFullValue={true}
+                        />
                       </div>
                       <div className="text-lg font-bold text-primary">
                         ${formatAmount(tx.amount)} USDC
@@ -251,10 +256,11 @@ export default function BuyerDisputes({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-primary/70">
                   <div>
-                    <span className="font-semibold text-primary/80">Seller:</span>{' '}
-                    <code className="bg-contrast px-1 py-0.5 rounded text-primary">
-                      {formatAddress(tx.seller_id)}
-                    </code>
+                    <CopyButton 
+                      value={tx.seller_id}
+                      label="Seller:"
+                      showFullValue={true}
+                    />
                   </div>
 
                   {tx.payment_settled_at && (

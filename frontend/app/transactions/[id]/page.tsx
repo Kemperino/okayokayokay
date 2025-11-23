@@ -1,13 +1,24 @@
-import { getResourceRequestById } from "@/lib/queries/resources.server";
+import { getResourceRequestById, getResourceByUrl } from "@/lib/queries/resources.server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import TransactionDetailClient from "@/components/TransactionDetailClient";
-import ContractStatusBadge from "@/components/ContractStatusBadge";
+import ContractStatusBadgeClient from "@/components/ContractStatusBadgeClient";
+import { batchGetRequestData } from "@/lib/contracts/multicall-batch";
+import CopyableCode from "@/components/CopyableCode";
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
+function extractBaseUrl(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    const urlObj = new URL(url);
+    return `${urlObj.protocol}//${urlObj.host}`;
+  } catch {
+    return null;
+  }
+}
 
 function getSellerDescription(sellerDescription: any): string | null {
   if (!sellerDescription) return null;
@@ -24,6 +35,38 @@ function getSellerDescription(sellerDescription: any): string | null {
   return null;
 }
 
+function getPriceFromSellerDescription(sellerDescription: any): bigint | null {
+  if (!sellerDescription) return null;
+
+  if (sellerDescription.accepts && Array.isArray(sellerDescription.accepts)) {
+    const firstAccept = sellerDescription.accepts[0];
+    const maxAmount = firstAccept?.maxAmountRequired;
+    
+    if (typeof maxAmount === 'string') {
+      try {
+        return BigInt(maxAmount);
+      } catch (e) {
+        console.error('[TransactionDetail] Failed to parse maxAmountRequired:', maxAmount, e);
+      }
+    }
+    if (typeof maxAmount === 'number') {
+      return BigInt(maxAmount);
+    }
+  }
+
+  if (sellerDescription.payment?.pricePerRequest) {
+    const price = sellerDescription.payment.pricePerRequest;
+    if (typeof price === 'number') {
+      return BigInt(Math.floor(price * 1e6));
+    }
+    if (typeof price === 'string') {
+      return BigInt(price);
+    }
+  }
+
+  return null;
+}
+
 export default async function TransactionDetailPage({ params }: PageProps) {
   const { id } = await params;
   const { data: request, error } = await getResourceRequestById(id);
@@ -32,7 +75,28 @@ export default async function TransactionDetailPage({ params }: PageProps) {
     notFound();
   }
 
+  const batchData = await batchGetRequestData([
+    {
+      requestId: request.request_id,
+      escrowContractAddress: request.escrow_contract_address,
+    },
+  ]);
+
+  const statusData = batchData.get(request.request_id);
+
   const description = getSellerDescription(request.seller_description);
+  let priceAmount = getPriceFromSellerDescription(request.seller_description);
+
+  if (!priceAmount && request.resource_url) {
+    const baseUrl = extractBaseUrl(request.resource_url);
+    if (baseUrl) {
+      const { data: resource } = await getResourceByUrl(baseUrl);
+      if (resource?.price_per_request) {
+        priceAmount = BigInt(Math.floor(resource.price_per_request * 1e6));
+      }
+    }
+  }
+
   const params_data = request.input_data?.params || {};
   const path = request.input_data?.path || request.resource_url || "Unknown";
 
@@ -71,9 +135,11 @@ export default async function TransactionDetailPage({ params }: PageProps) {
           </div>
           {request.escrow_contract_address && (
             <div className="flex-shrink-0">
-              <ContractStatusBadge
+              <ContractStatusBadgeClient
                 requestId={request.request_id}
                 escrowContractAddress={request.escrow_contract_address}
+                initialStatusLabel={statusData?.statusLabel || "Loading..."}
+                initialHasStatus={statusData?.hasStatus || false}
               />
             </div>
           )}
@@ -81,44 +147,24 @@ export default async function TransactionDetailPage({ params }: PageProps) {
 
         {/* Request ID */}
         <div className="mb-4 pb-4 border-b border-contrast">
-          <label className="text-sm font-semibold text-primary/80 block mb-1">
-            Request ID
-          </label>
-          <code className="text-xs bg-contrast px-3 py-2 rounded block font-mono break-all text-primary">
-            {request.request_id}
-          </code>
+          <CopyableCode value={request.request_id} label="Request ID" />
         </div>
 
         {/* Grid of Details */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="text-sm font-semibold text-primary/80 block mb-1">
-              User Address
-            </label>
-            <code className="text-xs bg-contrast px-3 py-2 rounded block font-mono break-all text-primary">
-              {request.user_address}
-            </code>
+            <CopyableCode value={request.user_address} label="User Address" />
           </div>
 
           {request.seller_address && (
             <div>
-              <label className="text-sm font-semibold text-primary/80 block mb-1">
-                Seller Address
-              </label>
-              <code className="text-xs bg-contrast px-3 py-2 rounded block font-mono break-all text-primary">
-                {request.seller_address}
-              </code>
+              <CopyableCode value={request.seller_address} label="Seller Address" />
             </div>
           )}
 
           {request.tx_hash && (
             <div className="lg:col-span-2">
-              <label className="text-sm font-semibold text-primary/80 block mb-1">
-                Transaction Hash
-              </label>
-              <code className="text-xs bg-contrast px-3 py-2 rounded block font-mono break-all text-primary">
-                {request.tx_hash}
-              </code>
+              <CopyableCode value={request.tx_hash} label="Transaction Hash" />
             </div>
           )}
 
@@ -192,6 +238,7 @@ export default async function TransactionDetailPage({ params }: PageProps) {
       <TransactionDetailClient
         requestId={request.request_id}
         escrowContractAddress={request.escrow_contract_address}
+        amount={priceAmount || statusData?.amount}
       />
     </div>
   );

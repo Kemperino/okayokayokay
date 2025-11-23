@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { RequestStatusLabels, RequestStatus } from '@/lib/contracts/DisputeEscrowABI';
 import type { DisputeWithStatus } from '@/lib/actions/get-user-disputes';
+import CopyButton from './CopyButton';
 
 interface DisputesListProps {
   disputes: DisputeWithStatus[];
@@ -73,7 +74,7 @@ export default function DisputesList({ disputes }: DisputesListProps) {
     <div className="space-y-4">
       {disputes.map((dispute) => {
         const description = getSellerDescription(dispute.seller_description);
-        const path = dispute.input_data?.path || dispute.resource_url || 'Unknown';
+        const resourceName = dispute.resource_name || dispute.input_data?.path || dispute.resource_url || 'Unknown';
         const statusLabel = dispute.contractStatus.status !== null 
           ? RequestStatusLabels[dispute.contractStatus.status]
           : 'Unknown';
@@ -88,14 +89,14 @@ export default function DisputesList({ disputes }: DisputesListProps) {
               <div className="flex items-start gap-3 flex-1">
                 {dispute.contractStatus.status !== null && getStatusIcon(dispute.contractStatus.status)}
                 <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-primary mb-1">
+                    {resourceName}
+                  </h3>
                   {description && (
-                    <h3 className="text-lg font-semibold text-primary mb-1">
+                    <p className="text-xs text-primary/60">
                       {description}
-                    </h3>
+                    </p>
                   )}
-                  <p className="text-sm text-primary/70 font-mono break-all">
-                    {path}
-                  </p>
                 </div>
               </div>
               <span
@@ -111,18 +112,20 @@ export default function DisputesList({ disputes }: DisputesListProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-primary/60">Request ID:</span>
-                <code className="ml-2 text-xs bg-contrast px-2 py-1 rounded font-mono text-primary">
-                  {dispute.request_id.slice(0, 16)}...
-                </code>
+                <CopyButton 
+                  value={dispute.request_id}
+                  label="Request ID:"
+                  showFullValue={false}
+                />
               </div>
 
               {dispute.seller_address && (
                 <div>
-                  <span className="text-primary/60">Seller:</span>
-                  <code className="ml-2 text-xs bg-contrast px-2 py-1 rounded font-mono text-primary">
-                    {dispute.seller_address.slice(0, 6)}...{dispute.seller_address.slice(-4)}
-                  </code>
+                  <CopyButton 
+                    value={dispute.seller_address}
+                    label="Seller:"
+                    showFullValue={false}
+                  />
                 </div>
               )}
 

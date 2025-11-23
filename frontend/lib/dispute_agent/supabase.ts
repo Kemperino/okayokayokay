@@ -66,39 +66,6 @@ export async function fetchResourceRequestData(
 }
 
 /**
- * Stores dispute resolution outcome in Supabase for audit trail
- */
-export async function storeDisputeResolution(
-  requestId: string,
-  contractAddress: string,
-  decision: { refund: boolean; reason: string },
-  transactionHash: string,
-  agentAddress: string
-): Promise<void> {
-  try {
-    const { error } = await getSupabaseClient()
-      .from('dispute_resolutions')
-      .insert({
-        request_id: requestId,
-        contract_address: contractAddress,
-        refund_decision: decision.refund,
-        reason: decision.reason,
-        transaction_hash: transactionHash,
-        agent_address: agentAddress,
-        resolved_at: new Date().toISOString()
-      });
-
-    if (error) {
-      console.error('Error storing dispute resolution:', error);
-      // Don't throw - this is optional audit logging
-    }
-  } catch (error) {
-    console.error('Error storing dispute resolution:', error);
-    // Don't throw - this is optional audit logging
-  }
-}
-
-/**
  * Fetches dispute history for a request (if any previous disputes exist)
  */
 export async function fetchDisputeHistory(

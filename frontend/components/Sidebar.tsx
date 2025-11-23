@@ -33,7 +33,9 @@ export function MobileHeader() {
                 height={40}
                 className="rounded"
               />
-              <span className="text-xl font-bold text-primary">okay3</span>
+              <span className="text-[#41EAD4] font-dalfitra text-2xl">
+                OkayOkayOkay
+              </span>
             </Link>
             <div className="flex items-center gap-4">
               <WalletBadge />
@@ -139,7 +141,9 @@ export function DesktopSidebar() {
             height={48}
             className="rounded"
           />
-          <span className="text-2xl font-bold text-primary">okay3</span>
+          <span className="text-[#41EAD4] font-dalfitra text-xl">
+            OkayOkayOkay
+          </span>
         </Link>
       </div>
 
@@ -154,7 +158,7 @@ export function DesktopSidebar() {
               href={link.href}
               className={`px-4 py-3 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${
                 isActive
-                  ? "bg-contrast text-primary"
+                  ? "bg-contrast text-[#41EAD4]"
                   : "text-primary hover:text-primary hover:bg-contrast"
               }`}
             >

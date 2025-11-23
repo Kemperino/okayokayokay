@@ -1,6 +1,7 @@
 "use client";
 
 import ResourceRequestCard from "./ResourceRequestCard";
+import type { RequestBatchData } from "@/lib/contracts/multicall-batch";
 
 interface ResourceRequest {
   request_id: string;
@@ -11,6 +12,7 @@ interface ResourceRequest {
   seller_description: any | null;
   tx_hash: string | null;
   resource_url: string | null;
+  resource_name?: string | null;
   status: string;
   error_message: string | null;
   escrow_contract_address: string | null;
@@ -20,8 +22,10 @@ interface ResourceRequest {
 
 export default function ResourceRequestHistory({
   requests,
+  batchData,
 }: {
   requests: ResourceRequest[];
+  batchData: Map<string, RequestBatchData>;
 }) {
   if (!requests || requests.length === 0) {
     return (
@@ -37,6 +41,7 @@ export default function ResourceRequestHistory({
         <ResourceRequestCard
           key={`${request.request_id}-${request.user_address}`}
           request={request}
+          batchData={batchData.get(request.request_id)}
         />
       ))}
     </div>

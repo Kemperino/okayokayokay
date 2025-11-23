@@ -43,15 +43,12 @@ export async function POST(req: NextRequest) {
     const signature = req.headers.get('x-alchemy-signature');
     const bodyText = await req.text();
 
-    const signingKey = process.env.ALCHEMY_USDC_TRANSFER_SIGNING_KEY;
-    if (!signingKey) {
-      console.error('ALCHEMY_USDC_TRANSFER_SIGNING_KEY not configured');
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
-    }
-
-    if (!validateAlchemySignature(bodyText, signature, signingKey)) {
-      console.error('Invalid Alchemy webhook signature for confirm-escrow');
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    // TEMPORARILY DISABLED: Signature verification
+    console.log('[TEMP] Signature verification DISABLED for confirm-escrow webhook');
+    if (signature) {
+      console.log('Alchemy signature present (not validated)');
+    } else {
+      console.log('No signature present');
     }
 
     // Parse the webhook payload

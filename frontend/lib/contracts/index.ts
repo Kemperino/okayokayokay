@@ -59,6 +59,10 @@ export {
   batchGetRequestDetails,
 } from './status-queries';
 
+// Multicall batching for performance
+export { batchGetRequestData } from './multicall-batch';
+export type { RequestBatchData } from './multicall-batch';
+
 // Helpers
 export { getEscrowAddressForMerchant, toChecksumAddress } from './helpers';
 

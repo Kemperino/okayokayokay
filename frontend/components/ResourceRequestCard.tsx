@@ -4,8 +4,9 @@ import Link from "next/link";
 import { Clock } from "lucide-react";
 
 import ContractStatusBadge from "./ContractStatusBadge";
-import { getContractNextDeadline } from "@/lib/actions/get-contract-status";
 import { useEffect, useState } from "react";
+import type { RequestBatchData } from "@/lib/contracts/multicall-batch";
+import CopyButton from "./CopyButton";
 
 interface ResourceRequest {
   request_id: string;
@@ -16,6 +17,7 @@ interface ResourceRequest {
   seller_description: any | null;
   tx_hash: string | null;
   resource_url: string | null;
+  resource_name?: string | null;
   status: string;
   error_message: string | null;
   escrow_contract_address: string | null;
@@ -25,6 +27,7 @@ interface ResourceRequest {
 
 interface ResourceRequestCardProps {
   request: ResourceRequest;
+  batchData?: RequestBatchData;
 }
 
 // Extract description from seller_description (x402 well-known data)
@@ -65,54 +68,43 @@ const formatCountdown = (secondsRemaining: number): string => {
   return parts.join(" ");
 };
 
+// Truncate address or hash to show first N and last M characters
+const truncateAddress = (
+  address: string,
+  startChars: number = 6,
+  endChars: number = 4
+): string => {
+  if (!address || address.length <= startChars + endChars) {
+    return address;
+  }
+  return `${address.slice(0, startChars)}...${address.slice(-endChars)}`;
+};
+
 export default function ResourceRequestCard({
   request,
+  batchData,
 }: ResourceRequestCardProps) {
   const description = getSellerDescription(request.seller_description);
   const params = request.input_data?.params || {};
-  const path = request.input_data?.path || request.resource_url || "Unknown";
+  const resourceName = request.resource_name || request.input_data?.path || request.resource_url || "Unknown";
 
-  const [nextDeadline, setNextDeadline] = useState<bigint | number | null>(
-    null
-  );
+  const nextDeadline = batchData?.nextDeadline ?? null;
   const [countdown, setCountdown] = useState<string>("");
 
-  useEffect(() => {
-    const fetchNextDeadline = async () => {
-      const newNextDeadline = await getContractNextDeadline(
-        request.request_id,
-        request.escrow_contract_address
-      );
-
-      if (newNextDeadline !== null) {
-        setNextDeadline(newNextDeadline);
-      }
-    };
-
-    fetchNextDeadline();
-  }, [request.request_id, request.escrow_contract_address]);
-
-  // Update countdown every second
   useEffect(() => {
     if (nextDeadline === null) {
       setCountdown("");
       return;
     }
 
-    // Convert BigInt to number if needed (Unix timestamp in seconds)
-    const deadlineTimestamp =
-      typeof nextDeadline === "bigint" ? Number(nextDeadline) : nextDeadline;
-
     const updateCountdown = () => {
-      const now = Math.floor(Date.now() / 1000); // Current time in seconds
-      const secondsRemaining = deadlineTimestamp - now;
+      const now = Math.floor(Date.now() / 1000);
+      const secondsRemaining = nextDeadline - now;
       setCountdown(formatCountdown(secondsRemaining));
     };
 
-    // Update immediately
     updateCountdown();
 
-    // Update every second
     const interval = setInterval(updateCountdown, 1000);
 
     return () => clearInterval(interval);
@@ -123,70 +115,99 @@ export default function ResourceRequestCard({
       href={`/transactions/${request.request_id}`}
       className="block border border-contrast rounded-lg p-4 bg-default shadow-sm hover:shadow hover:border-highlight transition cursor-pointer"
     >
+      <div className="flex items-center w-full justify-between gap-2 mb-2">
+        <div className="text-primary/50 text-xs">
+          {new Date(request.created_at).toLocaleString()}
+        </div>
+        {countdown && (
+          <div className="flex items-center gap-2 text-xs text-red-500">
+            <Clock size={14} className="" />
+            <span className="font-semibold ">Next Deadline:</span>
+            <span className=" font-mono text-red-500">{countdown}</span>
+          </div>
+        )}
+      </div>
+
       <div className="flex justify-between items-start gap-4 mb-3">
         <div className="flex-1 min-w-0">
+          <div className="text-base font-semibold text-primary mb-1">
+            {resourceName}
+          </div>
           {description && (
-            <div className="text-sm font-semibold text-primary mb-1">
+            <div className="text-xs text-primary/60">
               {description}
             </div>
           )}
-          <div className="text-sm text-primary/70 font-mono break-all">
-            {path}
+          <div className="text-sm text-blue-500 font-mono break-all">
+            {request.input_data?.path}
           </div>
         </div>
         <div className="flex-shrink-0">
           <ContractStatusBadge
-            requestId={request.request_id}
-            escrowContractAddress={request.escrow_contract_address}
+            statusLabel={batchData?.statusLabel || "Loading..."}
+            hasStatus={batchData?.hasStatus || false}
+            loading={!batchData}
           />
         </div>
       </div>
 
       <div className="space-y-2 text-xs text-primary/70">
-        {params && Object.keys(params).length > 0 && (
-          <div>
-            <span className="font-semibold text-primary/80">Params:</span>{" "}
-            {Object.entries(params)
-              .map(([k, v]) => `${k}=${v}`)
-              .join(", ")}
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {params && Object.keys(params).length > 0 && (
+            <div>
+              <span className="font-semibold text-primary/80">Params:</span>{" "}
+              {Object.entries(params)
+                .map(([k, v]) => `${k}=${v}`)
+                .join(", ")}
+            </div>
+          )}
+        </div>
 
-        {request.user_address && (
-          <div>
-            <span className="font-semibold text-primary/80">User:</span>{" "}
-            <code className="bg-contrast px-1 py-0.5 rounded text-xs text-primary font-mono">
-              {request.user_address}
-            </code>
-          </div>
-        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 min-w-0">
+          {request.user_address && (
+            <div className="min-w-0">
+              <CopyButton
+                value={request.user_address}
+                label="User:"
+                showFullValue={false}
+                className="w-full"
+              />
+            </div>
+          )}
 
-        {request.seller_address && (
-          <div>
-            <span className="font-semibold text-primary/80">Seller:</span>{" "}
-            <code className="bg-contrast px-1 py-0.5 rounded text-xs text-primary font-mono">
-              {request.seller_address}
-            </code>
-          </div>
-        )}
+          {request.seller_address && (
+            <div className="min-w-0">
+              <CopyButton
+                value={request.seller_address}
+                label="Seller:"
+                showFullValue={false}
+                className="w-full"
+              />
+            </div>
+          )}
 
-        {request.tx_hash && (
-          <div>
-            <span className="font-semibold text-primary/80">Tx:</span>{" "}
-            <code className="bg-contrast px-1 py-0.5 rounded text-primary font-mono break-all">
-              {request.tx_hash}
-            </code>
-          </div>
-        )}
+          {request.tx_hash && (
+            <div className="min-w-0">
+              <CopyButton
+                value={request.tx_hash}
+                label="Tx:"
+                showFullValue={false}
+                className="w-full"
+              />
+            </div>
+          )}
 
-        {request.escrow_contract_address && (
-          <div>
-            <span className="font-semibold">Escrow:</span>{" "}
-            <code className="bg-contrast px-1 py-0.5 rounded text-xs text-primary font-mono">
-              {request.escrow_contract_address}
-            </code>
-          </div>
-        )}
+          {request.escrow_contract_address && (
+            <div className="min-w-0">
+              <CopyButton
+                value={request.escrow_contract_address}
+                label="Escrow:"
+                showFullValue={false}
+                className="w-full"
+              />
+            </div>
+          )}
+        </div>
 
         {request.error_message && (
           <div className="text-error">
@@ -194,20 +215,6 @@ export default function ResourceRequestCard({
             {request.error_message}
           </div>
         )}
-
-        {countdown && (
-          <div className="flex items-center gap-2">
-            <Clock size={14} className="text-primary/80" />
-            <span className="font-semibold text-primary/80">
-              Next Deadline:
-            </span>
-            <span className="text-primary font-mono">{countdown}</span>
-          </div>
-        )}
-
-        <div className="text-primary/50">
-          {new Date(request.created_at).toLocaleString()}
-        </div>
       </div>
     </Link>
   );
