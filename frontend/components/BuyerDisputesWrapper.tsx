@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { getOrCreateSessionId } from '@/lib/session-manager';
 import BuyerDisputes from './BuyerDisputes';
 import type { DisputeStatus, ResourceRequest } from '@/lib/queries/transactions.server';
@@ -78,14 +79,14 @@ export default function BuyerDisputesWrapper({ contractAddress }: BuyerDisputesW
       <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white border border-gray-200 rounded-lg p-6 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-              <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+            <div key={i} className="bg-default border border-contrast rounded-lg p-6 animate-pulse">
+              <div className="h-4 bg-contrast rounded w-1/2 mb-2"></div>
+              <div className="h-8 bg-contrast rounded w-1/3"></div>
             </div>
           ))}
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-          <p className="text-gray-500">Loading your transactions...</p>
+        <div className="bg-default border border-contrast rounded-lg p-8 text-center">
+          <p className="text-primary/60">Loading your transactions...</p>
         </div>
       </div>
     );
@@ -93,9 +94,9 @@ export default function BuyerDisputesWrapper({ contractAddress }: BuyerDisputesW
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-        <h2 className="text-lg font-semibold mb-2 text-red-700">Error</h2>
-        <p className="text-red-600">{error}</p>
+      <div className="bg-error/20 border border-error rounded-lg p-6">
+        <h2 className="text-lg font-semibold mb-2 text-error">Error</h2>
+        <p className="text-error/80">{error}</p>
       </div>
     );
   }
@@ -112,27 +113,27 @@ export default function BuyerDisputesWrapper({ contractAddress }: BuyerDisputesW
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <div className="text-sm text-gray-600 mb-1">Total Requests</div>
-          <div className="text-3xl font-bold text-gray-900">
+        <div className="bg-default border border-contrast rounded-lg p-6">
+          <div className="text-sm text-primary/70 mb-1">Total Requests</div>
+          <div className="text-3xl font-bold text-primary">
             {totalRequests}
           </div>
-          <div className="text-xs text-gray-500 mt-1">
+          <div className="text-xs text-primary/50 mt-1">
             {transactions.length} escrow | {resourceRequests.length} x402
           </div>
         </div>
-        <div className="bg-white border border-yellow-200 rounded-lg p-6">
-          <div className="text-sm text-gray-600 mb-1">Pending</div>
-          <div className="text-3xl font-bold text-yellow-600">
+        <div className="bg-default border border-warning rounded-lg p-6">
+          <div className="text-sm text-primary/70 mb-1">Pending</div>
+          <div className="text-3xl font-bold text-warning">
             {unresolvedTransactions.length + pendingRequests}
           </div>
         </div>
-        <div className="bg-white border border-red-200 rounded-lg p-6">
-          <div className="text-sm text-gray-600 mb-1">In Dispute</div>
-          <div className="text-3xl font-bold text-red-600">
+        <div className="bg-default border border-error rounded-lg p-6">
+          <div className="text-sm text-primary/70 mb-1">In Dispute</div>
+          <div className="text-3xl font-bold text-error">
             {disputedCount}
           </div>
-          <div className="text-xs text-gray-500 mt-1">
+          <div className="text-xs text-primary/50 mt-1">
             {failedRequests} failed requests
           </div>
         </div>
@@ -141,25 +142,26 @@ export default function BuyerDisputesWrapper({ contractAddress }: BuyerDisputesW
       {/* Resource Requests */}
       {resourceRequests.length > 0 && (
         <div>
-          <h2 className="text-2xl font-bold mb-4">x402 Resource Requests</h2>
+          <h2 className="text-2xl font-bold mb-4 text-primary">x402 Resource Requests</h2>
           <div className="space-y-3">
             {resourceRequests.map((req) => (
-              <div
+              <Link
                 key={`${req.request_id}-${req.user_address}`}
-                className={`border rounded-lg p-4 bg-white shadow-sm ${
-                  req.error_message ? 'border-red-200 bg-red-50' : ''
+                href={`/transactions/${req.request_id}`}
+                className={`block border border-contrast rounded-lg p-4 bg-default shadow-sm hover:shadow hover:border-highlight transition cursor-pointer ${
+                  req.error_message ? 'border-error bg-error/10' : ''
                 }`}
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <div className="text-sm font-mono text-gray-600">
+                    <div className="text-sm font-mono text-primary/70">
                       {req.request_id.slice(0, 16)}...
                     </div>
-                    <div className="text-sm text-gray-700 mt-1">
+                    <div className="text-sm text-primary mt-1">
                       {req.resource_url || 'No URL'}
                     </div>
                     {req.tx_hash && (
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="text-xs text-primary/50 mt-1">
                         Tx: {req.tx_hash.slice(0, 10)}...{req.tx_hash.slice(-8)}
                       </div>
                     )}
@@ -168,25 +170,25 @@ export default function BuyerDisputesWrapper({ contractAddress }: BuyerDisputesW
                     <span
                       className={`px-2 py-1 rounded text-xs font-medium ${
                         req.status === 'completed'
-                          ? 'bg-green-100 text-green-800'
+                          ? 'bg-success/20 text-success'
                           : req.status === 'error'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-blue-100 text-blue-800'
+                          ? 'bg-error/20 text-error'
+                          : 'bg-highlight/20 text-highlight'
                       }`}
                     >
                       {req.status.toUpperCase()}
                     </span>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-primary/50">
                       {new Date(req.created_at).toLocaleString()}
                     </span>
                   </div>
                 </div>
                 {req.error_message && (
-                  <div className="mt-2 text-sm text-red-600">
+                  <div className="mt-2 text-sm text-error">
                     Error: {req.error_message}
                   </div>
                 )}
-              </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -195,7 +197,7 @@ export default function BuyerDisputesWrapper({ contractAddress }: BuyerDisputesW
       {/* Escrow Transactions with Disputes */}
       {transactions.length > 0 && (
         <div>
-          <h2 className="text-2xl font-bold mb-4">Escrow Transactions</h2>
+          <h2 className="text-2xl font-bold mb-4 text-primary">Escrow Transactions</h2>
           <BuyerDisputes
             transactions={transactions}
             contractAddress={contractAddress}
@@ -205,7 +207,7 @@ export default function BuyerDisputesWrapper({ contractAddress }: BuyerDisputesW
       )}
 
       {totalRequests === 0 && (
-        <div className="border rounded-lg p-8 text-center text-gray-500">
+        <div className="border border-contrast rounded-lg p-8 text-center text-primary/60 bg-default">
           No requests yet. Make x402 requests to see them here.
         </div>
       )}

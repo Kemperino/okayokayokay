@@ -15,7 +15,7 @@ const getContractAddress = (): Address => {
 // Create a public client for reading from the contract
 const publicClient = createPublicClient({
   chain: base,
-  transport: http(),
+  transport: http(process.env.NEXT_PUBLIC_BASE_RPC_URL),
 });
 
 /**

@@ -19,7 +19,7 @@ export default function ResourceList({ resources }: { resources: Resource[] }) {
 
   if (!resources || resources.length === 0) {
     return (
-      <div className="border rounded-lg p-8 text-center text-gray-500">
+      <div className="border border-contrast rounded-lg p-8 text-center text-primary/60">
         No resources added yet. Add your first x402 resource above.
       </div>
     );
@@ -28,19 +28,19 @@ export default function ResourceList({ resources }: { resources: Resource[] }) {
   return (
     <div className="space-y-4">
       {resources.map((resource) => (
-        <div key={resource.id} className="border rounded-lg p-6 bg-white shadow">
+        <div key={resource.id} className="border border-contrast rounded-lg p-6 bg-default shadow">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <h3 className="text-xl font-semibold">{resource.name}</h3>
+              <h3 className="text-xl font-semibold text-primary">{resource.name}</h3>
               {resource.description && (
-                <p className="text-gray-600 mt-1">{resource.description}</p>
+                <p className="text-primary/70 mt-1">{resource.description}</p>
               )}
             </div>
             <button
               onClick={() =>
                 setSelectedResource(selectedResource === resource.id ? null : resource.id)
               }
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition text-sm"
+              className="bg-highlight text-primary px-4 py-2 rounded hover:bg-highlight/90 transition text-sm"
             >
               {selectedResource === resource.id ? 'Close' : 'Test'}
             </button>
@@ -48,48 +48,48 @@ export default function ResourceList({ resources }: { resources: Resource[] }) {
 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="font-semibold text-gray-700">Base URL:</span>
+              <span className="font-semibold text-primary/80">Base URL:</span>
               <br />
               <a
                 href={resource.base_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:underline break-all"
+                className="text-highlight hover:underline break-all"
               >
                 {resource.base_url}
               </a>
             </div>
             <div>
-              <span className="font-semibold text-gray-700">Payment Address:</span>
+              <span className="font-semibold text-primary/80">Payment Address:</span>
               <br />
               {resource.payment_address ? (
-                <code className="text-xs bg-gray-100 px-2 py-1 rounded break-all">
+                <code className="text-xs bg-contrast px-2 py-1 rounded break-all text-primary">
                   {resource.payment_address}
                 </code>
               ) : (
-                <span className="text-gray-500">Not configured</span>
+                <span className="text-primary/50">Not configured</span>
               )}
             </div>
             <div>
-              <span className="font-semibold text-gray-700">Price Per Request:</span>
+              <span className="font-semibold text-primary/80">Price Per Request:</span>
               <br />
               {resource.price_per_request ? (
-                <span>{resource.price_per_request} USDC</span>
+                <span className="text-primary">{resource.price_per_request} USDC</span>
               ) : (
-                <span className="text-gray-500">Not configured</span>
+                <span className="text-primary/50">Not configured</span>
               )}
             </div>
             <div>
-              <span className="font-semibold text-gray-700">Added:</span>
+              <span className="font-semibold text-primary/80">Added:</span>
               <br />
-              <span className="text-gray-600">
+              <span className="text-primary/60">
                 {new Date(resource.created_at).toLocaleDateString()}
               </span>
             </div>
           </div>
 
           {selectedResource === resource.id && (
-            <div className="mt-6 pt-6 border-t">
+            <div className="mt-6 pt-6 border-t border-contrast">
               <ResourceTester resource={resource} />
             </div>
           )}

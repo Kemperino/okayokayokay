@@ -48,17 +48,17 @@ export function SessionWalletInfo() {
 
   if (loading) {
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <p className="text-gray-500">Loading your wallet...</p>
+      <div className="bg-default border border-contrast rounded-lg p-6">
+        <p className="text-primary/60">Loading your wallet...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-        <h2 className="text-lg font-semibold mb-2 text-red-700">Error</h2>
-        <p className="text-red-600">{error}</p>
+      <div className="bg-error/20 border border-error rounded-lg p-6">
+        <h2 className="text-lg font-semibold mb-2 text-error">Error</h2>
+        <p className="text-error/80">{error}</p>
       </div>
     );
   }
@@ -71,49 +71,49 @@ export function SessionWalletInfo() {
   const hasBalance = usdcBalance > 0;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
+    <div className="bg-default border border-contrast rounded-lg p-6">
       <div className="flex justify-between items-start mb-4">
-        <h2 className="text-lg font-semibold">Your Wallet</h2>
-        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+        <h2 className="text-lg font-semibold text-primary">Your Wallet</h2>
+        <span className="text-xs bg-success/20 text-success px-2 py-1 rounded">
           CDP Server Wallet
         </span>
       </div>
 
       <div className="space-y-3">
         <div>
-          <label className="text-sm text-gray-500 block">Wallet Address</label>
-          <code className="text-xs bg-gray-100 px-2 py-1 rounded block font-mono break-all">
+          <label className="text-sm text-primary/70 block">Wallet Address</label>
+          <code className="text-xs bg-contrast px-2 py-1 rounded block font-mono break-all text-primary">
             {walletInfo.walletAddress}
           </code>
         </div>
 
         <div>
-          <label className="text-sm text-gray-500 block">Network</label>
-          <span className="text-sm font-medium capitalize">{walletInfo.network}</span>
+          <label className="text-sm text-primary/70 block">Network</label>
+          <span className="text-sm font-medium capitalize text-primary">{walletInfo.network}</span>
         </div>
 
-        <div className="border-t pt-3 grid grid-cols-2 gap-4">
+        <div className="border-t border-contrast pt-3 grid grid-cols-2 gap-4">
           <div>
-            <label className="text-sm text-gray-500 block">USDC Balance</label>
-            <div className="text-xl font-bold text-blue-600">
+            <label className="text-sm text-primary/70 block">USDC Balance</label>
+            <div className="text-xl font-bold text-highlight">
               ${walletInfo.usdcBalance}
             </div>
           </div>
 
           <div>
-            <label className="text-sm text-gray-500 block">ETH Balance</label>
-            <div className="text-lg font-semibold">
+            <label className="text-sm text-primary/70 block">ETH Balance</label>
+            <div className="text-lg font-semibold text-primary">
               {parseFloat(walletInfo.ethBalance).toFixed(6)}
             </div>
           </div>
         </div>
 
         {!hasBalance && (
-          <div className="bg-blue-50 border border-blue-200 rounded p-4 mt-4">
-            <p className="text-sm text-blue-800 mb-2 font-semibold">
+          <div className="bg-highlight/20 border border-highlight rounded p-4 mt-4">
+            <p className="text-sm text-highlight mb-2 font-semibold">
               💰 Fund your wallet to make x402 requests
             </p>
-            <p className="text-xs text-blue-700 mb-3">
+            <p className="text-xs text-primary/70 mb-3">
               Send USDC to your wallet address above on Base network
             </p>
             <div className="flex gap-2">
@@ -121,7 +121,7 @@ export function SessionWalletInfo() {
                 href={`https://basescan.org/address/${walletInfo.walletAddress}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-blue-600 hover:underline"
+                className="text-xs text-highlight hover:underline"
               >
                 View on BaseScan →
               </a>
@@ -130,8 +130,8 @@ export function SessionWalletInfo() {
         )}
 
         {hasBalance && (
-          <div className="bg-green-50 border border-green-200 rounded p-3 mt-4">
-            <p className="text-sm text-green-800">
+          <div className="bg-success/20 border border-success rounded p-3 mt-4">
+            <p className="text-sm text-success">
               ✓ Wallet funded and ready for x402 requests
             </p>
           </div>

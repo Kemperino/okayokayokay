@@ -28,7 +28,7 @@ function createOperatorWalletClient() {
   return createWalletClient({
     account,
     chain: base,
-    transport: http(),
+    transport: http(process.env.BASE_RPC_URL),
   });
 }
 
@@ -38,7 +38,7 @@ function createOperatorWalletClient() {
 function createBasePublicClient() {
   return createPublicClient({
     chain: base,
-    transport: http(),
+    transport: http(process.env.BASE_RPC_URL),
   });
 }
 

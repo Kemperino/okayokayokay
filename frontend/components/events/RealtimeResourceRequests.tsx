@@ -74,12 +74,12 @@ export function RealtimeResourceRequests() {
   }, []);
 
   if (loading) {
-    return <div className="p-6">Loading resource requests...</div>;
+    return <div className="p-6 text-primary">Loading resource requests...</div>;
   }
 
   if (requests.length === 0) {
     return (
-      <div className="p-6 text-gray-500">
+      <div className="p-6 text-primary/60">
         No resource requests yet. Make your first x402 request!
       </div>
     );
@@ -91,24 +91,24 @@ export function RealtimeResourceRequests() {
         const isNew = request.request_id === newRequestId;
         return (<div
           key={request.request_id}
-          className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition-all ${
-            isNew ? 'bg-blue-50 border-blue-300 animate-pulse' : 'bg-white'
+          className={`border border-contrast rounded-lg p-4 shadow-sm hover:shadow-md transition-all ${
+            isNew ? 'bg-highlight/20 border-highlight animate-pulse' : 'bg-default'
           }`}
         >
           <div className="flex justify-between items-start mb-3">
             <div>
-              <div className="font-mono text-xs text-gray-600 mb-1">
+              <div className="font-mono text-xs text-primary/70 mb-1">
                 {request.resource_url || request.input_data?.path || 'Request'}
               </div>
-              <div className="text-sm">
-                <span className="text-gray-600">User:</span>{' '}
+              <div className="text-sm text-primary">
+                <span className="text-primary/60">User:</span>{' '}
                 <span className="font-mono text-xs">
                   {request.user_address.slice(0, 10)}...
                 </span>
               </div>
               {request.seller_address && (
-                <div className="text-sm">
-                  <span className="text-gray-600">Seller:</span>{' '}
+                <div className="text-sm text-primary">
+                  <span className="text-primary/60">Seller:</span>{' '}
                   <span className="font-mono text-xs">
                     {request.seller_address.slice(0, 10)}...
                   </span>
@@ -121,7 +121,7 @@ export function RealtimeResourceRequests() {
                 escrowContractAddress={request.escrow_contract_address}
               />
               {request.tx_hash && (
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-primary/50">
                   TX: {request.tx_hash.slice(0, 8)}...
                 </span>
               )}
@@ -129,14 +129,14 @@ export function RealtimeResourceRequests() {
           </div>
 
           {request.input_data?.params && Object.keys(request.input_data.params).length > 0 && (
-            <div className="text-xs text-gray-600 mb-2">
+            <div className="text-xs text-primary/60 mb-2">
               Params: {Object.entries(request.input_data.params)
                 .map(([k, v]) => `${k}=${v}`)
                 .join(', ')}
             </div>
           )}
 
-          <div className="text-xs text-gray-400 mt-2">
+          <div className="text-xs text-primary/40 mt-2">
             {new Date(request.created_at).toLocaleString()}
             {request.completed_at && (
               <> • Completed {new Date(request.completed_at).toLocaleTimeString()}</>

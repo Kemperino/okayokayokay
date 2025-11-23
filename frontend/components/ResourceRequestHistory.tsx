@@ -1,6 +1,8 @@
-'use client';
+"use client";
 
-import ContractStatusBadge from './ContractStatusBadge';
+import Link from "next/link";
+
+import ContractStatusBadge from "./ContractStatusBadge";
 
 interface ResourceRequest {
   request_id: string;
@@ -25,12 +27,24 @@ export default function ResourceRequestHistory({
 }) {
   if (!requests || requests.length === 0) {
     return (
-      <div className="border rounded-lg p-8 text-center text-gray-500">
+      <div className="border border-contrast rounded-lg p-8 text-center text-primary/60">
         No requests yet. Test a resource above to see request history.
       </div>
     );
   }
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "bg-success/20 text-success";
+      case "paid":
+        return "bg-highlight/20 text-highlight";
+      case "failed":
+        return "bg-error/20 text-error";
+      default:
+        return "bg-contrast text-primary";
+    }
+  };
 
   // Extract description from seller_description (x402 well-known data)
   const getSellerDescription = (sellerDescription: any): string | null => {
@@ -43,7 +57,7 @@ export default function ResourceRequestHistory({
     }
 
     // Fallback for other formats
-    if (typeof sellerDescription === 'string') {
+    if (typeof sellerDescription === "string") {
       return sellerDescription;
     }
 
@@ -55,21 +69,23 @@ export default function ResourceRequestHistory({
       {requests.map((request) => {
         const description = getSellerDescription(request.seller_description);
         const params = request.input_data?.params || {};
-        const path = request.input_data?.path || request.resource_url || 'Unknown';
+        const path =
+          request.input_data?.path || request.resource_url || "Unknown";
 
         return (
-          <div
+          <Link
             key={`${request.request_id}-${request.user_address}`}
-            className="border rounded-lg p-4 bg-white shadow-sm hover:shadow transition"
+            href={`/transactions/${request.request_id}`}
+            className="block border border-contrast rounded-lg p-4 bg-default shadow-sm hover:shadow hover:border-highlight transition cursor-pointer"
           >
             <div className="flex justify-between items-start mb-3">
               <div className="flex-1">
                 {description && (
-                  <div className="text-sm font-semibold text-gray-900 mb-1">
+                  <div className="text-sm font-semibold text-primary mb-1">
                     {description}
                   </div>
                 )}
-                <div className="text-sm text-gray-600 font-mono break-all">
+                <div className="text-sm text-primary/70 font-mono break-all">
                   {path}
                 </div>
               </div>
@@ -81,29 +97,30 @@ export default function ResourceRequestHistory({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="grid grid-cols-2 gap-3 text-xs text-primary/70">
               {params && Object.keys(params).length > 0 && (
                 <div className="col-span-2">
-                  <span className="font-semibold">Params:</span>{' '}
+                  <span className="font-semibold text-primary/80">Params:</span>{" "}
                   {Object.entries(params)
                     .map(([k, v]) => `${k}=${v}`)
-                    .join(', ')}
+                    .join(", ")}
                 </div>
               )}
 
               {request.seller_address && (
                 <div className="col-span-2">
-                  <span className="font-semibold">Seller:</span>{' '}
-                  <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">
-                    {request.seller_address.slice(0, 8)}...{request.seller_address.slice(-6)}
+                  <span className="font-semibold text-primary/80">Seller:</span>{" "}
+                  <code className="bg-contrast px-1 py-0.5 rounded text-xs text-primary">
+                    {request.seller_address.slice(0, 8)}...
+                    {request.seller_address.slice(-6)}
                   </code>
                 </div>
               )}
 
               {request.tx_hash && (
                 <div className="col-span-2">
-                  <span className="font-semibold">Tx:</span>{' '}
-                  <code className="bg-gray-100 px-1 py-0.5 rounded">
+                  <span className="font-semibold text-primary/80">Tx:</span>{" "}
+                  <code className="bg-contrast px-1 py-0.5 rounded text-primary">
                     {request.tx_hash.slice(0, 10)}...{request.tx_hash.slice(-8)}
                   </code>
                 </div>
@@ -111,8 +128,8 @@ export default function ResourceRequestHistory({
 
               {request.escrow_contract_address && (
                 <div className="col-span-2">
-                  <span className="font-semibold">Escrow:</span>{' '}
-                  <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">
+                  <span className="font-semibold">Escrow:</span>{" "}
+                  <code className="bg-contrast px-1 py-0.5 rounded text-xs text-primary">
                     {request.escrow_contract_address.slice(0, 8)}...
                     {request.escrow_contract_address.slice(-6)}
                   </code>
@@ -120,16 +137,17 @@ export default function ResourceRequestHistory({
               )}
 
               {request.error_message && (
-                <div className="col-span-2 text-red-600">
-                  <span className="font-semibold">Error:</span> {request.error_message}
+                <div className="col-span-2 text-error">
+                  <span className="font-semibold">Error:</span>{" "}
+                  {request.error_message}
                 </div>
               )}
 
-              <div className="col-span-2 text-gray-500">
+              <div className="col-span-2 text-primary/50">
                 {new Date(request.created_at).toLocaleString()}
               </div>
             </div>
-          </div>
+          </Link>
         );
       })}
     </div>
