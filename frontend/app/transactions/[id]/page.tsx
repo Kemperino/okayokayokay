@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import TransactionDetailClient from "@/components/TransactionDetailClient";
 import ContractStatusBadge from "@/components/ContractStatusBadge";
+import { batchGetRequestData } from "@/lib/contracts/multicall-batch";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -31,6 +32,15 @@ export default async function TransactionDetailPage({ params }: PageProps) {
   if (error || !request) {
     notFound();
   }
+
+  const batchData = await batchGetRequestData([
+    {
+      requestId: request.request_id,
+      escrowContractAddress: request.escrow_contract_address,
+    },
+  ]);
+
+  const statusData = batchData.get(request.request_id);
 
   const description = getSellerDescription(request.seller_description);
   const params_data = request.input_data?.params || {};
@@ -72,8 +82,9 @@ export default async function TransactionDetailPage({ params }: PageProps) {
           {request.escrow_contract_address && (
             <div className="flex-shrink-0">
               <ContractStatusBadge
-                requestId={request.request_id}
-                escrowContractAddress={request.escrow_contract_address}
+                statusLabel={statusData?.statusLabel || "Loading..."}
+                hasStatus={statusData?.hasStatus || false}
+                loading={!statusData}
               />
             </div>
           )}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import ContractStatusBadge from '../ContractStatusBadge';
+import ContractStatusBadgeClient from '../ContractStatusBadgeClient';
 
 type ResourceRequest = {
   request_id: string;
@@ -116,7 +116,7 @@ export function RealtimeResourceRequests() {
               )}
             </div>
             <div className="flex flex-col items-end gap-2">
-              <ContractStatusBadge
+              <ContractStatusBadgeClient
                 requestId={request.request_id}
                 escrowContractAddress={request.escrow_contract_address}
               />

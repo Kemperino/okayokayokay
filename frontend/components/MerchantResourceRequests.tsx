@@ -1,6 +1,6 @@
 'use client';
 
-import ContractStatusBadge from './ContractStatusBadge';
+import ContractStatusBadgeClient from './ContractStatusBadgeClient';
 
 interface ResourceRequest {
   request_id: string;
@@ -77,7 +77,7 @@ export default function MerchantResourceRequests({
                 </div>
               </div>
               <div className="flex flex-col gap-2 items-end ml-3">
-                <ContractStatusBadge
+                <ContractStatusBadgeClient
                   requestId={req.request_id}
                   escrowContractAddress={req.escrow_contract_address}
                 />
