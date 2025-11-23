@@ -21,16 +21,15 @@ export default async function DisputesPage({ searchParams }: PageProps) {
       </div>
 
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 text-primary">
-          My Transactions & Disputes
-        </h1>
+        <h1 className="text-3xl font-bold mb-2 text-primary">My Disputes</h1>
         <p className="text-primary/70">
           View your transaction history, track disputes, and monitor on-chain
           status
         </p>
       </div>
 
-      <BuyerDisputesWrapper contractAddress={contractAddress} />
+      {/* TODO: Put that in the dashboard  */}
+      {/* <BuyerDisputesWrapper contractAddress={contractAddress} /> */}
     </div>
   );
 }

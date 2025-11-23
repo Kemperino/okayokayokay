@@ -7,9 +7,9 @@ import { WalletBadge } from "@/components/WalletBadge";
 import { FileIcon, Table2, Menu, X, Activity } from "lucide-react";
 
 const links = [
+  { href: "/requests", label: "My Transactions", icon: Activity },
   { href: "/resources", label: "Resources", icon: Table2 },
   { href: "/disputes", label: "My Disputes", icon: FileIcon },
-  { href: "/requests", label: "My Requests", icon: Activity },
 ];
 
 export function MobileHeader() {

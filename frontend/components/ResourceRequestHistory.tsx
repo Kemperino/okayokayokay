@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import ContractStatusBadge from './ContractStatusBadge';
+import ContractStatusBadge from "./ContractStatusBadge";
 
 interface ResourceRequest {
   request_id: string;
@@ -128,8 +128,8 @@ export default function ResourceRequestHistory({
 
               {request.escrow_contract_address && (
                 <div className="col-span-2">
-                  <span className="font-semibold">Escrow:</span>{' '}
-                  <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">
+                  <span className="font-semibold">Escrow:</span>{" "}
+                  <code className="bg-contrast px-1 py-0.5 rounded text-xs text-primary">
                     {request.escrow_contract_address.slice(0, 8)}...
                     {request.escrow_contract_address.slice(-6)}
                   </code>

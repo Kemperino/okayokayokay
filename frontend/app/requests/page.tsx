@@ -32,11 +32,9 @@ export default async function RequestsPage({ searchParams }: PageProps) {
 
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2 text-primary">
-          Resource Requests
+          My Transactions
         </h1>
-        <p className="text-primary/70">
-          View all x402 resource requests with pagination
-        </p>
+        <p className="text-primary/70">View all your x402 transactions</p>
       </div>
 
       {error && (

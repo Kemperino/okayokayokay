@@ -7,9 +7,8 @@ import ResourceList from "@/components/ResourceList";
 import ResourceRequestHistory from "@/components/ResourceRequestHistory";
 
 // Force dynamic rendering - don't cache this page
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
-
 
 export default async function ResourcesPage() {
   const [resourcesResult, requestsResult] = await Promise.all([
@@ -46,19 +45,6 @@ export default async function ResourcesPage() {
           </div>
         )}
         {resources && <ResourceList resources={resources} />}
-      </div>
-
-      {/* Recent Requests */}
-      <div>
-        <h2 className="text-2xl font-bold mb-4 text-primary">
-          Recent Requests
-        </h2>
-        {requestsError && (
-          <div className="text-error mb-4">
-            Error loading requests: {requestsError.message}
-          </div>
-        )}
-        {requests && <ResourceRequestHistory requests={requests} />}
       </div>
     </div>
   );
