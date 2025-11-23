@@ -3,10 +3,19 @@ import { DisputeContext, LLMDecision } from './types';
 import { formatAmount } from './blockchain';
 import { formatMetadataForPrompt } from './metadata';
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!
-});
+// Initialize OpenAI client (lazy initialization to avoid build-time errors)
+let openai: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI {
+  if (!openai) {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error('OPENAI_API_KEY environment variable is required');
+    }
+    openai = new OpenAI({ apiKey });
+  }
+  return openai;
+}
 
 // Default system prompt for dispute resolution
 const DEFAULT_SYSTEM_PROMPT = `You are an impartial dispute resolution agent for a decentralized payment platform. Your role is to analyze disputes between buyers and service providers regarding API service delivery.
@@ -35,7 +44,8 @@ export async function makeDisputeDecision(context: DisputeContext): Promise<LLMD
     const userPrompt = prepareUserPrompt(context);
 
     // Make the LLM call
-    const completion = await openai.chat.completions.create({
+    const client = getOpenAIClient();
+    const completion = await client.chat.completions.create({
       model: process.env.OPENAI_MODEL || 'gpt-4-turbo-preview',
       messages: [
         { role: 'system', content: DEFAULT_SYSTEM_PROMPT },

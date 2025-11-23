@@ -7,6 +7,7 @@ import { encodeFunctionData, type Hex } from 'viem';
 import { base } from 'viem/chains';
 import { DisputeEscrowABI } from './DisputeEscrowABI';
 import { getAnonymousCdpAccount } from '@/lib/cdp/session-wallet';
+import { cdpClient } from '@/lib/cdp/client';
 import type {
   OpenDisputeParams,
   EscalateDisputeParams,
@@ -32,22 +33,22 @@ export async function openDispute(
     const data = encodeFunctionData({
       abi: DisputeEscrowABI,
       functionName: 'openDispute',
-      args: [params.requestId],
+      args: [params.requestId, params.claimDescription ?? ''],
     });
 
     // Send transaction via CDP
-    const tx = await account.sendTransaction({
-      to: params.escrowAddress,
-      data,
-      chainId: base.id,
+    const txResult = await cdpClient.evm.sendTransaction({
+      address: account.address,
+      network: 'base',
+      transaction: {
+        to: params.escrowAddress,
+        data,
+      },
     });
-
-    // Wait for transaction confirmation
-    await tx.wait();
 
     return {
       success: true,
-      transactionHash: tx.hash as Hex,
+      transactionHash: txResult.transactionHash as Hex,
     };
   } catch (error) {
     console.error('Error opening dispute:', error);
@@ -80,17 +81,18 @@ export async function escalateDispute(
       args: [params.requestId],
     });
 
-    const tx = await account.sendTransaction({
-      to: params.escrowAddress,
-      data,
-      chainId: base.id,
+    const txResult = await cdpClient.evm.sendTransaction({
+      address: account.address,
+      network: 'base',
+      transaction: {
+        to: params.escrowAddress,
+        data,
+      },
     });
-
-    await tx.wait();
 
     return {
       success: true,
-      transactionHash: tx.hash as Hex,
+      transactionHash: txResult.transactionHash as Hex,
     };
   } catch (error) {
     console.error('Error escalating dispute:', error);
@@ -119,17 +121,18 @@ export async function earlyReleaseEscrow(
       args: [params.requestId],
     });
 
-    const tx = await account.sendTransaction({
-      to: params.escrowAddress,
-      data,
-      chainId: base.id,
+    const txResult = await cdpClient.evm.sendTransaction({
+      address: account.address,
+      network: 'base',
+      transaction: {
+        to: params.escrowAddress,
+        data,
+      },
     });
-
-    await tx.wait();
 
     return {
       success: true,
-      transactionHash: tx.hash as Hex,
+      transactionHash: txResult.transactionHash as Hex,
     };
   } catch (error) {
     console.error('Error releasing escrow early:', error);
@@ -161,17 +164,18 @@ export async function cancelDispute(
       args: [params.requestId],
     });
 
-    const tx = await account.sendTransaction({
-      to: params.escrowAddress,
-      data,
-      chainId: base.id,
+    const txResult = await cdpClient.evm.sendTransaction({
+      address: account.address,
+      network: 'base',
+      transaction: {
+        to: params.escrowAddress,
+        data,
+      },
     });
-
-    await tx.wait();
 
     return {
       success: true,
-      transactionHash: tx.hash as Hex,
+      transactionHash: txResult.transactionHash as Hex,
     };
   } catch (error) {
     console.error('Error canceling dispute:', error);

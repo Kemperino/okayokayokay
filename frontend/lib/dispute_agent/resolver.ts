@@ -44,13 +44,13 @@ export async function resolveDisputeOnChain(
     console.log(`Estimated gas: ${gasEstimate.toString()}`);
 
     // Add 20% buffer to gas estimate
-    const gasLimit = gasEstimate * 120n / 100n;
+    const gasLimit = gasEstimate * BigInt(120) / BigInt(100);
 
     // Get current gas price
     const feeData = await provider.getFeeData();
     const gasPrice = feeData.gasPrice;
 
-    console.log(`Gas price: ${ethers.formatUnits(gasPrice || 0n, 'gwei')} gwei`);
+    console.log(`Gas price: ${ethers.formatUnits(gasPrice || BigInt(0), 'gwei')} gwei`);
 
     // Execute the transaction
     const tx = await escrowContract.resolveDispute(
@@ -58,7 +58,7 @@ export async function resolveDisputeOnChain(
       refundBuyer,
       {
         gasLimit,
-        gasPrice: gasPrice ? gasPrice * 110n / 100n : undefined // Add 10% buffer to gas price
+        gasPrice: gasPrice ? gasPrice * BigInt(110) / BigInt(100) : undefined // Add 10% buffer to gas price
       }
     );
 

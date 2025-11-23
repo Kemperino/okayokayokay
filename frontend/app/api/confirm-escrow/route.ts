@@ -61,6 +61,8 @@ export async function POST(req: NextRequest) {
       authorizer: string | null;
       nonce: string | null;
       blockNumber: number | null;
+      confirmTxHash?: string;
+      confirmSuccess?: boolean;
     }> = [];
 
     // Process each USDC Transfer log

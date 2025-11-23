@@ -21,9 +21,10 @@ import {
 } from './types';
 
 // Create a public client for reading from the blockchain
+// Use BASE_RPC_URL (server-side) or NEXT_PUBLIC_BASE_RPC_URL (client-side)
 const publicClient = createPublicClient({
   chain: base,
-  transport: http(process.env.NEXT_PUBLIC_BASE_RPC_URL || undefined),
+  transport: http(process.env.BASE_RPC_URL || process.env.NEXT_PUBLIC_BASE_RPC_URL || undefined),
 });
 
 /**

@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { ServiceRequest } from '../types';
+import { ServiceRequest } from '../contracts/types';
 
 // DisputeEscrow contract ABI (only the functions we need)
 const DISPUTE_ESCROW_ABI = [
