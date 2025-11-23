@@ -3,14 +3,30 @@ import {
   getActiveResources,
   createResource,
   updateResourceWellKnown,
+  getResourceByUrl,
 } from '@/lib/queries/resources.server';
 
 /**
  * GET /api/resources
- * List all active resources
+ * List all active resources or get a specific resource by URL
+ * Query params:
+ * - url: Get resource by base URL
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const url = searchParams.get('url');
+
+    if (url) {
+      const { data, error } = await getResourceByUrl(url);
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 404 });
+      }
+
+      return NextResponse.json({ resource: data });
+    }
+
     const { data, error } = await getActiveResources();
 
     if (error) {

@@ -42,7 +42,7 @@ export default function ResourceList({ resources }: { resources: Resource[] }) {
               }
               className="bg-highlight text-primary px-4 py-2 rounded hover:bg-highlight/90 transition text-sm"
             >
-              {selectedResource === resource.id ? 'Close' : 'Test'}
+              {selectedResource === resource.id ? 'Close' : 'Use'}
             </button>
           </div>
 

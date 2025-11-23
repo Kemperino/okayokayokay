@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callConfirmEscrow } from "@/lib/contracts/operator-actions";
 import { validateAlchemySignature } from "@/lib/alchemy/signature";
+import { uploadRequestData, pieceCidToBytes32, getZeroHash } from "@/lib/synapse";
+import { getResourceRequestById, updateResourceRequestIpfsCid } from "@/lib/queries/resources.server";
 import type { Address, Hex } from "viem";
 
 // USDC contract on Base
@@ -75,6 +77,8 @@ export async function POST(req: NextRequest) {
       blockNumber: number | null;
       confirmTxHash?: string;
       confirmSuccess?: boolean;
+      pieceCid?: string | null;
+      apiResponseHash?: string;
     }> = [];
 
     // Process each USDC Transfer log
@@ -131,15 +135,59 @@ export async function POST(req: NextRequest) {
 
       // Call confirmEscrow on the smart contract
       let confirmResult = null;
+      let apiResponseHash: Hex = getZeroHash();
+      let uploadedPieceCid: string | null = null;
+
       if (fromAddress && toAddress && nonce) {
+        // Step 1: Try to upload request data to Filecoin via Synapse
+        try {
+          // The nonce is the request_id - look up the resource request from Supabase
+          console.log(`[confirmEscrow] Looking up resource request for nonce: ${nonce}`);
+          const { data: resourceRequest, error: lookupError } = await getResourceRequestById(nonce);
+
+          if (lookupError) {
+            console.log(`[confirmEscrow] Could not find resource request: ${lookupError.message}`);
+          } else if (resourceRequest && resourceRequest.input_data && resourceRequest.output_data) {
+            console.log(`[confirmEscrow] Found resource request, uploading to Filecoin...`);
+
+            // Upload input + output data to Filecoin
+            const uploadResult = await uploadRequestData(
+              nonce,
+              resourceRequest.input_data,
+              resourceRequest.output_data
+            );
+
+            if (uploadResult.success && uploadResult.pieceCid) {
+              // Convert PieceCID to bytes32 hash for on-chain storage
+              apiResponseHash = pieceCidToBytes32(uploadResult.pieceCid);
+              uploadedPieceCid = uploadResult.pieceCid;
+
+              console.log(`[confirmEscrow] ✅ Uploaded to Filecoin. PieceCID: ${uploadResult.pieceCid}`);
+              console.log(`[confirmEscrow] ✅ API Response Hash: ${apiResponseHash}`);
+
+              // Update the resource request with the PieceCID
+              await updateResourceRequestIpfsCid(nonce, uploadResult.pieceCid);
+            } else {
+              console.log(`[confirmEscrow] ⚠️ Filecoin upload failed: ${uploadResult.error}, using zero hash`);
+            }
+          } else {
+            console.log('[confirmEscrow] Resource request has no input/output data, using zero hash');
+          }
+        } catch (uploadError) {
+          console.error('[confirmEscrow] Exception during Filecoin upload:', uploadError);
+          // Continue with zero hash - don't block the escrow confirmation
+        }
+
+        // Step 2: Call confirmEscrow on-chain with the apiResponseHash
         try {
           console.log('[confirmEscrow] Calling confirmEscrow on-chain...');
+          console.log(`[confirmEscrow] Using apiResponseHash: ${apiResponseHash}`);
           confirmResult = await callConfirmEscrow(
             nonce as Hex,                    // requestId (nonce from transferWithAuth)
             fromAddress as Address,          // buyer address
             BigInt(amount),                  // amount
             toAddress as Address,            // contract address (the escrow address that received the USDC)
-            '0x0000000000000000000000000000000000000000000000000000000000000000' as Hex // apiResponseHash (placeholder)
+            apiResponseHash                  // apiResponseHash (PieceCID hash or zero)
           );
 
           if (confirmResult.success) {
@@ -162,6 +210,8 @@ export async function POST(req: NextRequest) {
         blockNumber: block.number,
         confirmTxHash: confirmResult?.txHash,
         confirmSuccess: confirmResult?.success ?? false,
+        pieceCid: uploadedPieceCid,
+        apiResponseHash,
       });
     }
 

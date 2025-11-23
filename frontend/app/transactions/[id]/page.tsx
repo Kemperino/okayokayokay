@@ -239,6 +239,7 @@ export default async function TransactionDetailPage({ params }: PageProps) {
         requestId={request.request_id}
         escrowContractAddress={request.escrow_contract_address}
         amount={priceAmount || statusData?.amount}
+        resourceUrl={request.resource_url}
       />
     </div>
   );

@@ -25,7 +25,7 @@ export default async function ResourcesPage() {
         <h1 className="text-2xl font-bold mb-2 text-[#41EAD4]">
           x402 RESOURCES
         </h1>
-        <p className="text-primary">Browse and test x402-powered resources</p>
+        <p className="text-primary">Browse and use x402-powered resources</p>
       </div>
 
       {/* Add Resource Form */}

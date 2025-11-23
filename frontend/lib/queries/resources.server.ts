@@ -32,6 +32,7 @@ export interface ResourceRequest {
   status: string;
   error_message: string | null;
   escrow_contract_address: string | null;
+  ipfs_piece_cid?: string | null;  // Optional - set later when uploaded to Filecoin
   created_at: string;
   completed_at: string | null;
 }
@@ -120,6 +121,19 @@ export async function updateResourceRequest(requestId: string, updates: Partial<
     .update({
       ...updates,
       completed_at: updates.status === 'completed' || updates.status === 'failed' ? new Date().toISOString() : undefined,
+    })
+    .eq('request_id', requestId);
+}
+
+/**
+ * Update the IPFS PieceCID for a resource request
+ * Called after successfully uploading request data to Filecoin
+ */
+export async function updateResourceRequestIpfsCid(requestId: string, ipfsPieceCid: string) {
+  return supabase
+    .from('resource_requests')
+    .update({
+      ipfs_piece_cid: ipfsPieceCid,
     })
     .eq('request_id', requestId);
 }

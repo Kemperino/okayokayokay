@@ -167,6 +167,42 @@ export default function DisputeActionButtons({
     }
   };
 
+  const handleReleaseEscrow = async () => {
+    try {
+      setLoading("release");
+      setError(null);
+      setTxHash(null);
+
+      const sessionId = getSessionId();
+
+      const response = await fetch("/api/disputes/release", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          requestId,
+          escrowAddress,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to release escrow");
+      }
+
+      setTxHash(data.transactionHash);
+
+      await waitForTransaction(data.transactionHash);
+      onSuccess?.("release");
+    } catch (err) {
+      console.error("Error releasing escrow:", err);
+      setError(err instanceof Error ? err.message : "Failed to release escrow");
+    } finally {
+      setLoading(null);
+    }
+  };
+
   const hasAnyAction = canOpen || canEscalate || canCancel;
 
   if (!hasAnyAction) {
@@ -174,7 +210,7 @@ export default function DisputeActionButtons({
   }
 
   return (
-    <div className="bg-default/20 backdrop-blur-sm border border-contrast rounded-lg p-6 fixed left-1/2 -translate-x-1/2 bottom-5 items-center justify-center flex flex-col">
+    <div className="bg-default/20 backdrop-blur-sm border border-contrast rounded-lg p-6 sticky bottom-5 mx-auto items-center justify-center flex flex-col w-fit">
       <div className="flex flex-wrap gap-3">
         {canOpen && (
           <button
@@ -273,11 +309,11 @@ export default function DisputeActionButtons({
         )}
 
         <button
-          // TODO: Implement butoon click
+          onClick={handleReleaseEscrow}
           disabled={loading !== null}
           className="px-4 py-2 bg-success text-background font-medium rounded hover:bg-success/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading === "open" ? (
+          {loading === "release" ? (
             <span className="flex items-center gap-2">
               <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                 <circle
@@ -295,7 +331,7 @@ export default function DisputeActionButtons({
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 />
               </svg>
-              Opening...
+              Releasing...
             </span>
           ) : (
             "Release Escrow"
