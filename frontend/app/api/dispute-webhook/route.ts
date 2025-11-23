@@ -1,22 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleDisputeWebhook } from '@/lib/dispute_agent/webhook-handler';
+import { validateAlchemySignature } from '@/lib/alchemy/signature';
 
 export async function POST(request: NextRequest) {
   try {
-    // Get the webhook signature from headers
-    const signature = request.headers.get('x-webhook-signature');
+    const signature = request.headers.get('x-alchemy-signature');
+    const bodyText = await request.text();
 
-    // Validate the webhook signature if configured
-    const webhookSecret = process.env.WEBHOOK_SECRET;
-    if (webhookSecret && signature !== webhookSecret) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const signingKey = process.env.ALCHEMY_DISPUTE_WEBHOOK_SIGNING_KEY;
+    if (!signingKey) {
+      console.error('ALCHEMY_DISPUTE_WEBHOOK_SIGNING_KEY not configured');
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
-    // Parse the request body
-    const body = await request.json();
+    if (!validateAlchemySignature(bodyText, signature, signingKey)) {
+      console.error('Invalid Alchemy webhook signature for dispute-webhook');
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    }
+
+    const body = JSON.parse(bodyText);
 
     console.log('Dispute webhook received:', {
       event: body.event,
@@ -53,7 +55,7 @@ export async function GET(request: NextRequest) {
     method: 'Use POST to send webhook events',
     testMode: true,
     environment: {
-      hasWebhookSecret: !!process.env.WEBHOOK_SECRET,
+      hasAlchemySigningKey: !!process.env.ALCHEMY_DISPUTE_WEBHOOK_SIGNING_KEY,
       hasOpenAI: !!process.env.OPENAI_API_KEY,
       hasSupabase: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
       hasPrivateKey: !!process.env.AGENT_PRIVATE_KEY,

@@ -12,8 +12,9 @@ contract DisputeEscrow {
           EscrowReleased,     // 2: Funds released to seller
           DisputeOpened,      // 3: Buyer filed dispute
           SellerAccepted,     // 4: Seller accepted refund
-          DisputeEscalated,   // 5: Escalated to agent
-          DisputeResolved     // 6: Agent resolved
+          DisputeRejected,    // 5: Seller rejected refund
+          DisputeEscalated,   // 6: Escalated to agent
+          DisputeResolved     // 7: Agent resolved
     }
 
     struct ServiceRequest {
@@ -136,18 +137,16 @@ contract DisputeEscrow {
 
         // Can release if:
         // 1. Status is Escrowed and dispute deadline passed
-        // 2. Status is DisputeOpened, seller rejected, and escalation deadline passed
-        // 3. Status is DisputeOpened, seller didn't respond, and reasonable time passed for buyer to escalate
+        // 2. Status is DisputeRejected and escalation deadline passed
+        // 3. Status is DisputeOpened (seller didn't respond) and reasonable time passed for buyer to escalate
         if (req.status == RequestStatus.Escrowed) {
             require(block.timestamp >= req.nextDeadline, "Still in dispute window");
+        } else if (req.status == RequestStatus.DisputeRejected) {
+            // Seller rejected, check escalation deadline
+            require(block.timestamp >= req.nextDeadline, "Still in escalation window");
         } else if (req.status == RequestStatus.DisputeOpened) {
-            if (req.sellerRejected) {
-                // Seller rejected, check escalation deadline
-                require(block.timestamp >= req.nextDeadline, "Still in escalation window");
-            } else {
-                // Seller didn't respond, give buyer reasonable time to escalate (same as BUYER_ESCALATION_PERIOD)
-                require(block.timestamp >= req.nextDeadline + BUYER_ESCALATION_PERIOD, "Buyer can still escalate");
-            }
+            // Seller didn't respond, give buyer reasonable time to escalate
+            require(block.timestamp >= req.nextDeadline + BUYER_ESCALATION_PERIOD, "Buyer can still escalate");
         } else {
             revert("Cannot release funds");
         }
@@ -217,9 +216,9 @@ contract DisputeEscrow {
             IERC20(usdc).transfer(req.buyer, req.amount);
         } else {
             // Seller rejected - buyer has 2 days to escalate
+            req.status = RequestStatus.DisputeRejected;
             req.sellerRejected = true;
             req.nextDeadline = block.timestamp + BUYER_ESCALATION_PERIOD;  // Now deadline for buyer to escalate
-            // Status remains DisputeOpened so buyer can still escalate
         }
 
         emit DisputeResponded(requestId, acceptRefund);
@@ -232,15 +231,19 @@ contract DisputeEscrow {
     function escalateDispute(bytes32 requestId) external {
         ServiceRequest storage req = requests[requestId];
         require(msg.sender == req.buyer, "Not buyer");
-        require(req.status == RequestStatus.DisputeOpened, "Invalid dispute status");
+        require(
+            req.status == RequestStatus.DisputeOpened ||
+            req.status == RequestStatus.DisputeRejected,
+            "Invalid dispute status"
+        );
 
         // Can escalate if:
-        // 1. Seller didn't respond in time (deadline passed and not rejected)
-        // 2. Seller rejected and buyer is within escalation deadline
-        if (!req.sellerRejected) {
+        // 1. DisputeOpened and seller didn't respond in time
+        // 2. DisputeRejected and buyer is within escalation deadline
+        if (req.status == RequestStatus.DisputeOpened) {
             // Seller didn't respond - check if response deadline passed
             require(block.timestamp > req.nextDeadline, "Seller response period still active");
-        } else {
+        } else if (req.status == RequestStatus.DisputeRejected) {
             // Seller rejected - check if buyer is within escalation deadline
             require(block.timestamp <= req.nextDeadline, "Escalation period expired");
         }
@@ -286,6 +289,7 @@ contract DisputeEscrow {
         require(msg.sender == req.buyer, "Not buyer");
         require(
             req.status == RequestStatus.DisputeOpened ||
+            req.status == RequestStatus.DisputeRejected ||
             req.status == RequestStatus.DisputeEscalated,
             "Invalid dispute status"
         );

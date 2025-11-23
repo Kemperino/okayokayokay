@@ -268,9 +268,9 @@ contract DisputeEscrowTest is Test {
         emit DisputeResponded(REQUEST_ID_1, false);
         escrow.respondToDispute(REQUEST_ID_1, false);
 
-        // Check status remains DisputeOpened for escalation
+        // Check status is now DisputeRejected
         (,,,, DisputeEscrow.RequestStatus status,,, bool buyerRefunded, bool sellerRejected) = escrow.requests(REQUEST_ID_1);
-        assertEq(uint(status), uint(DisputeEscrow.RequestStatus.DisputeOpened));
+        assertEq(uint(status), uint(DisputeEscrow.RequestStatus.DisputeRejected));
         assertFalse(buyerRefunded);
         assertTrue(sellerRejected);
 
@@ -442,6 +442,30 @@ contract DisputeEscrowTest is Test {
         uint256 sellerBalanceBefore = usdc.balanceOf(serviceProvider);
         escrow.releaseEscrow(REQUEST_ID_1);
         assertEq(usdc.balanceOf(serviceProvider), sellerBalanceBefore + ESCROW_AMOUNT);
+    }
+
+    function testCancelRejectedDispute() public {
+        // Setup and open dispute
+        _setupDisputedEscrow();
+
+        // Seller rejects
+        vm.prank(serviceProvider);
+        escrow.respondToDispute(REQUEST_ID_1, false);
+
+        // Check status is DisputeRejected
+        assertEq(uint(escrow.getRequestStatus(REQUEST_ID_1)), uint(DisputeEscrow.RequestStatus.DisputeRejected));
+
+        // Buyer can cancel rejected dispute
+        vm.prank(buyer1);
+        vm.expectEmit(true, false, false, false);
+        emit DisputeCancelled(REQUEST_ID_1);
+        escrow.cancelDispute(REQUEST_ID_1);
+
+        // Check status back to escrowed
+        assertEq(uint(escrow.getRequestStatus(REQUEST_ID_1)), uint(DisputeEscrow.RequestStatus.Escrowed));
+
+        // Seller can now withdraw
+        escrow.releaseEscrow(REQUEST_ID_1);
     }
 
     // ============ Balance Tracking Tests ============

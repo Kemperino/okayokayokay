@@ -293,8 +293,9 @@ get_request_status() {
     echo "2 = EscrowReleased"
     echo "3 = DisputeOpened"
     echo "4 = SellerAccepted"
-    echo "5 = DisputeEscalated"
-    echo "6 = DisputeResolved"
+    echo "5 = DisputeRejected"
+    echo "6 = DisputeEscalated"
+    echo "7 = DisputeResolved"
 }
 
 # Main loop

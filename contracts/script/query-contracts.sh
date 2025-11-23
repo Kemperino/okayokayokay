@@ -32,8 +32,9 @@ decode_status() {
         2) echo "EscrowReleased" ;;
         3) echo "DisputeOpened" ;;
         4) echo "SellerAccepted" ;;
-        5) echo "DisputeEscalated" ;;
-        6) echo "DisputeResolved" ;;
+        5) echo "DisputeRejected" ;;
+        6) echo "DisputeEscalated" ;;
+        7) echo "DisputeResolved" ;;
         *) echo "Unknown" ;;
     esac
 }

@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { getSessionId } from '@/lib/session-manager';
+import { createPublicClient, http } from 'viem';
+import { base } from 'viem/chains';
 
 interface DisputeActionButtonsProps {
   requestId: string;
@@ -23,10 +25,29 @@ export default function DisputeActionButtons({
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
   if (!escrowAddress) {
     return null;
   }
+
+  const waitForTransaction = async (hash: `0x${string}`) => {
+    const publicClient = createPublicClient({
+      chain: base,
+      transport: http(process.env.NEXT_PUBLIC_BASE_RPC_URL),
+    });
+
+    setConfirming(true);
+    try {
+      const receipt = await publicClient.waitForTransactionReceipt({
+        hash,
+        confirmations: 1,
+      });
+      return receipt;
+    } finally {
+      setConfirming(false);
+    }
+  };
 
   const handleOpenDispute = async () => {
     try {
@@ -53,6 +74,8 @@ export default function DisputeActionButtons({
       }
 
       setTxHash(data.transactionHash);
+      
+      await waitForTransaction(data.transactionHash);
       onSuccess?.('open');
     } catch (err) {
       console.error('Error opening dispute:', err);
@@ -87,6 +110,8 @@ export default function DisputeActionButtons({
       }
 
       setTxHash(data.transactionHash);
+      
+      await waitForTransaction(data.transactionHash);
       onSuccess?.('escalate');
     } catch (err) {
       console.error('Error escalating dispute:', err);
@@ -125,6 +150,8 @@ export default function DisputeActionButtons({
       }
 
       setTxHash(data.transactionHash);
+      
+      await waitForTransaction(data.transactionHash);
       onSuccess?.('cancel');
     } catch (err) {
       console.error('Error cancelling dispute:', err);
@@ -221,21 +248,32 @@ export default function DisputeActionButtons({
       )}
 
       {txHash && (
-        <div className="bg-success/20 border border-success rounded p-3">
+        <div className={confirming ? "bg-highlight/20 border border-highlight rounded p-3" : "bg-success/20 border border-success rounded p-3"}>
           <div className="flex items-start gap-2">
-            <svg className="w-5 h-5 text-success flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
+            {confirming ? (
+              <svg className="animate-spin h-5 w-5 text-highlight flex-shrink-0 mt-0.5" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 text-success flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            )}
             <div className="flex-1">
-              <p className="text-sm font-semibold text-success mb-1">Transaction Submitted</p>
-              <p className="text-xs text-success/80 mb-2">
-                Your transaction has been sent to the blockchain. It may take a few moments to confirm.
+              <p className={`text-sm font-semibold mb-1 ${confirming ? 'text-highlight' : 'text-success'}`}>
+                {confirming ? 'Confirming Transaction...' : 'Transaction Confirmed'}
+              </p>
+              <p className={`text-xs mb-2 ${confirming ? 'text-highlight/80' : 'text-success/80'}`}>
+                {confirming 
+                  ? 'Waiting for blockchain confirmation...' 
+                  : 'Your transaction has been confirmed on the blockchain.'}
               </p>
               <a
                 href={`https://basescan.org/tx/${txHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-success underline hover:text-success/80 font-mono break-all"
+                className={`text-xs underline font-mono break-all ${confirming ? 'text-highlight hover:text-highlight/80' : 'text-success hover:text-success/80'}`}
               >
                 {txHash}
               </a>

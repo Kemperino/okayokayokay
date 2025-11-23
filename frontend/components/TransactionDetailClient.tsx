@@ -80,23 +80,16 @@ export default function TransactionDetailClient({
   const handleSuccess = (action: string) => {
     setPendingAction(action);
     
-    // Poll for status updates with longer delays to avoid flickering
-    // Base blockchain typically confirms in 2-3 seconds, so start polling at 4s
-    const pollDelays = [4000, 6000, 8000, 12000, 16000]; // 4s, 6s, 8s, 12s, 16s
+    // Transaction is already confirmed when this is called
+    // Immediately refetch status
+    setRefreshKey((prev) => prev + 1);
     
-    pollDelays.forEach((delay, index) => {
-      setTimeout(() => {
-        console.log(`[TransactionDetail] Polling attempt ${index + 1} after ${delay}ms`);
-        setRefreshKey((prev) => prev + 1);
-        
-        // Clear pending state after last poll
-        if (index === pollDelays.length - 1) {
-          setTimeout(() => {
-            setPendingAction(null);
-          }, 1000); // Give one more second for final status update
-        }
-      }, delay);
-    });
+    // Do one more refetch after 2 seconds in case the indexer/webhook needs time to process
+    setTimeout(() => {
+      console.log('[TransactionDetail] Final status refetch after indexer delay');
+      setRefreshKey((prev) => prev + 1);
+      setPendingAction(null);
+    }, 2000);
   };
 
   if (!escrowContractAddress) {
@@ -140,7 +133,7 @@ export default function TransactionDetailClient({
         </div>
       )}
 
-      {/* Show pending banner when transaction is processing */}
+      {/* Show pending banner when updating status */}
       {pendingAction && (
         <div className="bg-highlight/20 border border-highlight rounded-lg p-4">
           <div className="flex items-center gap-3">
@@ -149,11 +142,9 @@ export default function TransactionDetailClient({
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
             <div>
-              <p className="text-sm font-semibold text-highlight">Transaction Pending</p>
+              <p className="text-sm font-semibold text-highlight">Updating Status</p>
               <p className="text-xs text-highlight/80">
-                Waiting for blockchain confirmation... This may take up to 30 seconds.
-                {pendingAction === 'open' && ' The Cancel Dispute button will become active after confirmation.'}
-                {pendingAction === 'escalate' && ' The Cancel Dispute button will remain available after confirmation.'}
+                Transaction confirmed! Refreshing contract status...
               </p>
             </div>
           </div>
