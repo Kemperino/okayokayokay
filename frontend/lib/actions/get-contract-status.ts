@@ -236,7 +236,16 @@ export async function canEscalateDispute(
 
 /**
  * Check if a buyer can cancel an existing dispute.
- * Returns true when the request is in DisputeOpened, DisputeRejected, or DisputeEscalated status.
+ * 
+ * Can cancel when:
+ * - DisputeOpened: Buyer opened dispute, seller hasn't responded yet
+ * - DisputeRejected: Seller rejected the refund request
+ * - DisputeEscalated: Dispute was escalated to agent but not yet resolved
+ * 
+ * Cannot cancel when:
+ * - SellerAccepted: Seller already accepted refund, automatic processing
+ * - DisputeResolved: Agent already resolved the dispute
+ * - Any other status: No active dispute to cancel
  */
 export async function canCancelDispute(
   requestId: string,
@@ -262,6 +271,16 @@ export async function canCancelDispute(
     );
 
     if (!request) {
+      return false;
+    }
+
+    if (request.status === RequestStatus.SellerAccepted) {
+      console.log("[canCancelDispute] Cannot cancel: seller already accepted refund");
+      return false;
+    }
+
+    if (request.status === RequestStatus.DisputeResolved) {
+      console.log("[canCancelDispute] Cannot cancel: dispute already resolved");
       return false;
     }
 

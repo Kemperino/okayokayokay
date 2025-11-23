@@ -6,6 +6,18 @@ import DisputeActionButtons from './DisputeActionButtons';
 import ContractStatusBadge from './ContractStatusBadge';
 import { getContractNextDeadline } from '@/lib/actions/get-contract-status';
 
+/**
+ * TransactionDetailClient - Single source of truth for contract status
+ * 
+ * Adaptive Polling Strategy:
+ * - Starts at 1000ms (1 second) intervals
+ * - When status changes detected: switches to 500ms (0.5 second) for 10 seconds
+ * - After user transaction: switches to 500ms for 10 seconds
+ * - After fast period: slows down to 2000ms (2 seconds)
+ * - Broadcasts all updates via 'contract-status-update' custom events
+ * - All status badges listen to these events for perfect synchronization
+ */
+
 interface TransactionDetailClientProps {
   requestId: string;
   escrowContractAddress: string | null;
@@ -47,24 +59,25 @@ export default function TransactionDetailClient({
 }: TransactionDetailClientProps) {
   const [statusData, setStatusData] = useState<ContractStatusData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [refreshKey, setRefreshKey] = useState(0);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [nextDeadline, setNextDeadline] = useState<bigint | number | null>(null);
   const [countdown, setCountdown] = useState<string>("");
-  const [aggressivePolling, setAggressivePolling] = useState(false);
+  const [pollInterval, setPollInterval] = useState(1000);
+  const [lastStatus, setLastStatus] = useState<number | null>(null);
 
   useEffect(() => {
+    if (!escrowContractAddress) {
+      setLoading(false);
+      return;
+    }
+
+    let isActive = true;
+    let timeoutId: NodeJS.Timeout;
+
     const fetchContractStatus = async () => {
-      if (!escrowContractAddress) {
-        setLoading(false);
-        return;
-      }
+      if (!isActive) return;
 
       try {
-        if (refreshKey === 0) {
-          setLoading(true);
-        }
-
         const [statusRes, openRes, escalateRes, cancelRes] = await Promise.all([
           fetch(`/api/contract-status?requestId=${requestId}&escrowAddress=${escrowContractAddress}`),
           fetch(`/api/contract-status/can-open?requestId=${requestId}&escrowAddress=${escrowContractAddress}`),
@@ -89,9 +102,22 @@ export default function TransactionDetailClient({
           buyerRefunded: status.buyerRefunded,
         };
 
-        console.log('[TransactionDetail] Fetched status:', newStatusData);
+        if (!isActive) return;
 
+        const statusChanged = lastStatus !== null && lastStatus !== newStatusData.status;
+        
+        if (statusChanged) {
+          console.log('[TransactionDetail] Status changed!', {
+            old: lastStatus,
+            new: newStatusData.status,
+            label: newStatusData.statusLabel
+          });
+          setPollInterval(500);
+        }
+
+        setLastStatus(newStatusData.status);
         setStatusData(newStatusData);
+        setLoading(false);
 
         window.dispatchEvent(
           new CustomEvent('contract-status-update', {
@@ -104,50 +130,60 @@ export default function TransactionDetailClient({
             },
           })
         );
+
+        if (isActive) {
+          timeoutId = setTimeout(fetchContractStatus, pollInterval);
+        }
       } catch (error) {
-        console.error('Error fetching contract status:', error);
-      } finally {
-        setLoading(false);
+        console.error('[TransactionDetail] Error fetching contract status:', error);
+        if (isActive) {
+          timeoutId = setTimeout(fetchContractStatus, pollInterval);
+        }
       }
     };
 
+    setLoading(true);
     fetchContractStatus();
-  }, [requestId, escrowContractAddress, refreshKey]);
-
-  // Aggressive polling after transactions
-  useEffect(() => {
-    if (!aggressivePolling || !escrowContractAddress) return;
-
-    const pollInterval = setInterval(() => {
-      console.log('[TransactionDetail] Aggressive poll');
-      setRefreshKey((prev) => prev + 1);
-    }, 500);
-
-    const stopPollingTimeout = setTimeout(() => {
-      console.log('[TransactionDetail] Stopping aggressive polling');
-      setAggressivePolling(false);
-      clearInterval(pollInterval);
-    }, 5000);
 
     return () => {
-      clearInterval(pollInterval);
-      clearTimeout(stopPollingTimeout);
+      isActive = false;
+      if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [aggressivePolling, escrowContractAddress]);
+  }, [requestId, escrowContractAddress, pollInterval, lastStatus]);
 
-  // Fetch next deadline
   useEffect(() => {
+    if (pollInterval === 500) {
+      const slowDownTimer = setTimeout(() => {
+        console.log('[TransactionDetail] Slowing down polling to 2000ms');
+        setPollInterval(2000);
+      }, 10000);
+
+      return () => clearTimeout(slowDownTimer);
+    }
+  }, [pollInterval]);
+
+  useEffect(() => {
+    if (!escrowContractAddress) return;
+
+    let isActive = true;
+
     const fetchNextDeadline = async () => {
-      if (!escrowContractAddress) return;
+      if (!isActive) return;
       
       const deadline = await getContractNextDeadline(requestId, escrowContractAddress);
-      if (deadline !== null) {
+      if (deadline !== null && isActive) {
         setNextDeadline(deadline);
       }
     };
 
     fetchNextDeadline();
-  }, [requestId, escrowContractAddress, refreshKey]);
+    const interval = setInterval(fetchNextDeadline, pollInterval);
+
+    return () => {
+      isActive = false;
+      clearInterval(interval);
+    };
+  }, [requestId, escrowContractAddress, pollInterval]);
 
   // Update countdown every second
   useEffect(() => {
@@ -174,13 +210,11 @@ export default function TransactionDetailClient({
   const handleSuccess = (action: string) => {
     console.log('[TransactionDetail] Transaction confirmed, starting aggressive polling');
     setPendingAction(action);
-    
-    setRefreshKey((prev) => prev + 1);
-    setAggressivePolling(true);
+    setPollInterval(500);
     
     setTimeout(() => {
       setPendingAction(null);
-    }, 5000);
+    }, 3000);
   };
 
   if (!escrowContractAddress) {

@@ -3,6 +3,16 @@
 import { useEffect, useState } from 'react';
 import ContractStatusBadge from './ContractStatusBadge';
 
+/**
+ * ContractStatusBadgeClient - Pure event listener for status updates
+ * 
+ * Synchronization Strategy:
+ * - Fetches initial status once on mount for immediate display
+ * - Listens to 'contract-status-update' events from TransactionDetailClient
+ * - Does NOT poll independently - single source of truth ensures consistency
+ * - Always stays in perfect sync with TransactionDetailClient polling
+ */
+
 interface ContractStatusBadgeClientProps {
   requestId: string;
   escrowContractAddress: string | null;
@@ -24,27 +34,29 @@ export default function ContractStatusBadgeClient({
   useEffect(() => {
     if (!escrowContractAddress) return;
 
-    const fetchStatus = async () => {
+    let isInitialized = false;
+
+    const fetchInitialStatus = async () => {
       try {
         const res = await fetch(
           `/api/contract-status?requestId=${requestId}&escrowAddress=${escrowContractAddress}`
         );
         const data = await res.json();
         
-        setStatusLabel(data.statusLabel);
-        setHasStatus(data.hasStatus);
-        setBuyerRefunded(data.buyerRefunded);
-        setLoading(false);
+        if (!isInitialized) {
+          setStatusLabel(data.statusLabel);
+          setHasStatus(data.hasStatus);
+          setBuyerRefunded(data.buyerRefunded);
+          setLoading(false);
+          isInitialized = true;
+        }
       } catch (error) {
-        console.error('[ContractStatusBadgeClient] Error fetching status:', error);
+        console.error('[ContractStatusBadgeClient] Error fetching initial status:', error);
+        setLoading(false);
       }
     };
 
-    fetchStatus();
-
-    const interval = setInterval(fetchStatus, 2000);
-
-    return () => clearInterval(interval);
+    fetchInitialStatus();
   }, [requestId, escrowContractAddress]);
 
   useEffect(() => {
@@ -57,7 +69,7 @@ export default function ContractStatusBadgeClient({
       } = event.detail;
       
       if (eventRequestId === requestId) {
-        console.log('[ContractStatusBadgeClient] Received status update event:', event.detail);
+        console.log('[ContractStatusBadgeClient] Syncing with TransactionDetailClient:', event.detail);
         setStatusLabel(newStatusLabel);
         setHasStatus(newHasStatus);
         setBuyerRefunded(newBuyerRefunded);
