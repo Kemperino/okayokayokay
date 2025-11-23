@@ -56,7 +56,8 @@ export async function GET(request: NextRequest) {
       hasWebhookSecret: !!process.env.WEBHOOK_SECRET,
       hasOpenAI: !!process.env.OPENAI_API_KEY,
       hasSupabase: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-      hasPrivateKey: !!process.env.AGENT_PRIVATE_KEY
+      hasPrivateKey: !!process.env.AGENT_PRIVATE_KEY,
+      hasRPC: !!process.env.BASE_RPC_URL
     }
   });
 }
