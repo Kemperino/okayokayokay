@@ -61,7 +61,7 @@ export default function DisputesList({ disputes }: DisputesListProps) {
         </svg>
         <h3 className="text-lg font-semibold text-primary mb-2">No Active Disputes</h3>
         <p className="text-primary/60">
-          You don't have any active disputes at the moment.
+          You don&apos;t have any active disputes at the moment.
         </p>
       </div>
     );
