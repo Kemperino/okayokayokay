@@ -66,16 +66,28 @@ export async function handleDisputeWebhook(payload: WebhookEvent): Promise<Webho
       const requestId = decoded.args[0];
       console.log(`Processing dispute for request ${requestId} in contract ${contractAddress}`);
 
-      console.log('Fetching request details from blockchain...');
+      console.log('Checking on-chain state for idempotency...');
       const serviceRequest = await fetchRequestDetails(contractAddress, requestId);
 
-      if (serviceRequest.status !== RequestStatus.DisputeEscalated) {
-        console.error(`Request ${requestId} is not in escalated state`);
+      if (serviceRequest.status === RequestStatus.DisputeResolved) {
+        console.log(`Dispute ${requestId} already resolved on-chain. Returning success (idempotent).`);
         return {
-          success: false,
-          error: 'Request not in escalated state'
+          success: true,
+          requestId,
+          message: 'Dispute already resolved on-chain (duplicate webhook call)'
         };
       }
+
+      if (serviceRequest.status !== RequestStatus.DisputeEscalated) {
+        console.log(`Request ${requestId} not in escalated state (status: ${serviceRequest.status}). Skipping.`);
+        return {
+          success: true,
+          requestId,
+          message: `Request not in escalated state (status: ${serviceRequest.status})`
+        };
+      }
+
+      console.log(`Request ${requestId} confirmed in DisputeEscalated state. Processing...`)
 
       console.log('Fetching resource request data from Supabase...');
       const resourceRequestData = await fetchResourceRequestData(requestId);
@@ -126,13 +138,13 @@ export async function handleDisputeWebhook(payload: WebhookEvent): Promise<Webho
         console.log('Skipping blockchain call (TEST_MODE)');
         transactionHash = '0x' + '0'.repeat(64);
       } else {
-        console.log('Executing on-chain dispute resolution...');
+        console.log('Sending on-chain dispute resolution transaction...');
         transactionHash = await resolveDisputeOnChain(
           contractAddress,
           requestId,
           decision.refund
         );
-        console.log(`Dispute resolved on-chain. Transaction hash: ${transactionHash}`);
+        console.log(`Transaction submitted: ${transactionHash} (not waiting for confirmation)`);
       }
 
       return {

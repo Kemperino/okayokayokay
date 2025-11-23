@@ -1,6 +1,7 @@
 'use client';
 
-import ContractStatusBadge from './ContractStatusBadge';
+import ContractStatusBadgeClient from './ContractStatusBadgeClient';
+import CopyButton from './CopyButton';
 
 interface ResourceRequest {
   request_id: string;
@@ -11,6 +12,7 @@ interface ResourceRequest {
   seller_description: any | null;
   tx_hash: string | null;
   resource_url: string | null;
+  resource_name?: string | null;
   status: string;
   error_message: string | null;
   escrow_contract_address: string | null;
@@ -58,7 +60,7 @@ export default function MerchantResourceRequests({
       {requests.map((req) => {
         const description = getSellerDescription(req.seller_description);
         const params = req.input_data?.params || {};
-        const path = req.input_data?.path || req.resource_url || 'Unknown';
+        const resourceName = req.resource_name || req.input_data?.path || req.resource_url || 'Unknown';
 
         return (
           <div
@@ -67,17 +69,17 @@ export default function MerchantResourceRequests({
           >
             <div className="flex justify-between items-start mb-3">
               <div className="flex-1">
+                <div className="text-base font-semibold text-gray-900 mb-1">
+                  {resourceName}
+                </div>
                 {description && (
-                  <div className="text-sm font-semibold text-gray-900 mb-1">
+                  <div className="text-xs text-gray-600">
                     {description}
                   </div>
                 )}
-                <div className="text-sm text-gray-600 font-mono break-all">
-                  {path}
-                </div>
               </div>
               <div className="flex flex-col gap-2 items-end ml-3">
-                <ContractStatusBadge
+                <ContractStatusBadgeClient
                   requestId={req.request_id}
                   escrowContractAddress={req.escrow_contract_address}
                 />
@@ -96,25 +98,27 @@ export default function MerchantResourceRequests({
 
               {req.user_address && (
                 <div>
-                  <span className="font-semibold">Buyer:</span>{' '}
-                  <code className="bg-gray-100 px-1 py-0.5 rounded">
-                    {formatAddress(req.user_address)}
-                  </code>
+                  <CopyButton 
+                    value={req.user_address}
+                    label="Buyer:"
+                    showFullValue={true}
+                  />
                 </div>
               )}
 
               {req.tx_hash && (
                 <div>
-                  <span className="font-semibold">Tx:</span>{' '}
                   <a
                     href={`https://basescan.org/tx/${req.tx_hash}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
+                    className="text-blue-600 hover:underline inline-flex items-center gap-2"
                   >
-                    <code className="bg-gray-100 px-1 py-0.5 rounded">
-                      {req.tx_hash.slice(0, 10)}...{req.tx_hash.slice(-8)}
-                    </code>
+                    <CopyButton 
+                      value={req.tx_hash}
+                      label="Tx:"
+                      showFullValue={true}
+                    />
                   </a>
                 </div>
               )}

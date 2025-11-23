@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { getOrCreateSessionId } from '@/lib/session-manager';
 import BuyerDisputes from './BuyerDisputes';
 import type { DisputeStatus, ResourceRequest } from '@/lib/queries/transactions.server';
+import CopyButton from './CopyButton';
 
 interface Transaction {
   request_id: string;
@@ -153,16 +154,24 @@ export default function BuyerDisputesWrapper({ contractAddress }: BuyerDisputesW
                 }`}
               >
                 <div className="flex justify-between items-start">
-                  <div>
-                    <div className="text-sm font-mono text-primary/70">
-                      {req.request_id.slice(0, 16)}...
+                  <div className="flex-1">
+                    <div className="mb-2">
+                      <CopyButton 
+                        value={req.request_id}
+                        label="Request ID:"
+                        showFullValue={true}
+                      />
                     </div>
                     <div className="text-sm text-primary mt-1">
                       {req.resource_url || 'No URL'}
                     </div>
                     {req.tx_hash && (
-                      <div className="text-xs text-primary/50 mt-1">
-                        Tx: {req.tx_hash.slice(0, 10)}...{req.tx_hash.slice(-8)}
+                      <div className="mt-1">
+                        <CopyButton 
+                          value={req.tx_hash}
+                          label="Tx:"
+                          showFullValue={true}
+                        />
                       </div>
                     )}
                   </div>

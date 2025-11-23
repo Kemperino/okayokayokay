@@ -10,6 +10,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ["Figtree", "sans-serif"],
+        dalfitra: ["Dalfitra", "sans-serif"],
       },
       colors: {
         default: "#27272A",

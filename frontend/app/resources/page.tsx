@@ -21,12 +21,11 @@ export default async function ResourcesPage() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 text-primary">x402 Resources</h1>
-        <p className="text-primary/70">
-          Browse and test x402-powered resources. Your CDP server wallet handles
-          payments automatically.
-        </p>
+      <div className="mb-8 flex items-center gap-4">
+        <h1 className="text-2xl font-bold mb-2 text-[#41EAD4]">
+          x402 RESOURCES
+        </h1>
+        <p className="text-primary">Browse and test x402-powered resources</p>
       </div>
 
       {/* Add Resource Form */}

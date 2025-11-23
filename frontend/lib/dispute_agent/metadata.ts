@@ -27,10 +27,8 @@ export async function fetchServiceMetadata(metadataURI: string): Promise<Service
 
     // Handle IPFS URIs
     if (metadataURI.startsWith('ipfs://')) {
-      // Convert IPFS URI to HTTP gateway URL
       const ipfsHash = metadataURI.replace('ipfs://', '');
-      url = `https://ipfs.io/ipfs/${ipfsHash}`;
-      // Alternative gateways: cloudflare-ipfs.com, gateway.pinata.cloud
+      url = `https://gateway.lighthouse.storage/ipfs/${ipfsHash}`;
     }
 
     // Handle Arweave URIs
