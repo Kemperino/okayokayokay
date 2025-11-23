@@ -12,6 +12,7 @@ interface ResourceRequest {
   seller_description: any | null;
   tx_hash: string | null;
   resource_url: string | null;
+  resource_name?: string | null;
   status: string;
   error_message: string | null;
   escrow_contract_address: string | null;
@@ -59,7 +60,7 @@ export default function MerchantResourceRequests({
       {requests.map((req) => {
         const description = getSellerDescription(req.seller_description);
         const params = req.input_data?.params || {};
-        const path = req.input_data?.path || req.resource_url || 'Unknown';
+        const resourceName = req.resource_name || req.input_data?.path || req.resource_url || 'Unknown';
 
         return (
           <div
@@ -68,14 +69,14 @@ export default function MerchantResourceRequests({
           >
             <div className="flex justify-between items-start mb-3">
               <div className="flex-1">
+                <div className="text-base font-semibold text-gray-900 mb-1">
+                  {resourceName}
+                </div>
                 {description && (
-                  <div className="text-sm font-semibold text-gray-900 mb-1">
+                  <div className="text-xs text-gray-600">
                     {description}
                   </div>
                 )}
-                <div className="text-sm text-gray-600 font-mono break-all">
-                  {path}
-                </div>
               </div>
               <div className="flex flex-col gap-2 items-end ml-3">
                 <ContractStatusBadgeClient

@@ -17,6 +17,7 @@ interface ResourceRequest {
   seller_description: any | null;
   tx_hash: string | null;
   resource_url: string | null;
+  resource_name?: string | null;
   status: string;
   error_message: string | null;
   escrow_contract_address: string | null;
@@ -73,7 +74,7 @@ export default function ResourceRequestCard({
 }: ResourceRequestCardProps) {
   const description = getSellerDescription(request.seller_description);
   const params = request.input_data?.params || {};
-  const path = request.input_data?.path || request.resource_url || "Unknown";
+  const resourceName = request.resource_name || request.input_data?.path || request.resource_url || "Unknown";
 
   const nextDeadline = batchData?.nextDeadline ?? null;
   const [countdown, setCountdown] = useState<string>("");
@@ -104,14 +105,14 @@ export default function ResourceRequestCard({
     >
       <div className="flex justify-between items-start gap-4 mb-3">
         <div className="flex-1 min-w-0">
+          <div className="text-base font-semibold text-primary mb-1">
+            {resourceName}
+          </div>
           {description && (
-            <div className="text-sm font-semibold text-primary mb-1">
+            <div className="text-xs text-primary/60">
               {description}
             </div>
           )}
-          <div className="text-sm text-primary/70 font-mono break-all">
-            {path}
-          </div>
         </div>
         <div className="flex-shrink-0">
           <ContractStatusBadge

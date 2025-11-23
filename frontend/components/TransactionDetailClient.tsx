@@ -279,7 +279,7 @@ export default function TransactionDetailClient({
                 />
               )}
             </div>
-            {countdown && (
+            {countdown && statusData.status !== null && statusData.status !== 2 && statusData.status !== 4 && statusData.status !== 7 && (
               <div className="flex items-center gap-2 text-sm">
                 <Clock size={16} className="text-primary/80" />
                 <span className="font-semibold text-primary/80">Next Deadline:</span>

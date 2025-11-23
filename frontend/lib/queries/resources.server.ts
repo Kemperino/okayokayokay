@@ -28,6 +28,7 @@ export interface ResourceRequest {
   seller_description: any | null;
   tx_hash: string | null;
   resource_url: string | null;
+  resource_name?: string | null;
   status: string;
   error_message: string | null;
   escrow_contract_address: string | null;
@@ -127,35 +128,140 @@ export async function updateResourceRequest(requestId: string, updates: Partial<
  * Get resource requests by seller address
  */
 export async function getResourceRequestsBySeller(sellerAddress: string, limit = 100) {
-  return supabase
+  const { data, error } = await supabase
     .from('resource_requests')
     .select('*')
     .eq('seller_address', sellerAddress)
     .order('created_at', { ascending: false })
     .limit(limit);
+
+  if (error || !data) {
+    return { data, error };
+  }
+
+  // Get unique base URLs from resource_requests
+  const baseUrls = new Set<string>();
+  data.forEach((req) => {
+    const baseUrl = extractBaseUrl(req.resource_url);
+    if (baseUrl) baseUrls.add(baseUrl);
+  });
+
+  // Fetch resources for these base URLs
+  const { data: resources } = await supabase
+    .from('resources')
+    .select('base_url, name')
+    .in('base_url', Array.from(baseUrls));
+
+  // Create a map of base_url -> resource name
+  const resourceNameMap = new Map<string, string>();
+  resources?.forEach((resource) => {
+    resourceNameMap.set(resource.base_url, resource.name);
+  });
+
+  // Add resource_name to each request
+  const dataWithResourceNames = data.map((req) => {
+    const baseUrl = extractBaseUrl(req.resource_url);
+    const resourceName = baseUrl ? resourceNameMap.get(baseUrl) : null;
+    return {
+      ...req,
+      resource_name: resourceName || null,
+    };
+  });
+
+  return { data: dataWithResourceNames, error };
 }
 
 /**
  * Get resource requests by user address
  */
 export async function getResourceRequestsByUser(userAddress: string, limit = 100) {
-  return supabase
+  const { data, error } = await supabase
     .from('resource_requests')
     .select('*')
     .eq('user_address', userAddress)
     .order('created_at', { ascending: false })
     .limit(limit);
+
+  if (error || !data) {
+    return { data, error };
+  }
+
+  // Get unique base URLs from resource_requests
+  const baseUrls = new Set<string>();
+  data.forEach((req) => {
+    const baseUrl = extractBaseUrl(req.resource_url);
+    if (baseUrl) baseUrls.add(baseUrl);
+  });
+
+  // Fetch resources for these base URLs
+  const { data: resources } = await supabase
+    .from('resources')
+    .select('base_url, name')
+    .in('base_url', Array.from(baseUrls));
+
+  // Create a map of base_url -> resource name
+  const resourceNameMap = new Map<string, string>();
+  resources?.forEach((resource) => {
+    resourceNameMap.set(resource.base_url, resource.name);
+  });
+
+  // Add resource_name to each request
+  const dataWithResourceNames = data.map((req) => {
+    const baseUrl = extractBaseUrl(req.resource_url);
+    const resourceName = baseUrl ? resourceNameMap.get(baseUrl) : null;
+    return {
+      ...req,
+      resource_name: resourceName || null,
+    };
+  });
+
+  return { data: dataWithResourceNames, error };
 }
 
 /**
  * Get recent resource requests across all resources
  */
 export async function getRecentResourceRequests(limit = 50) {
-  return supabase
+  const { data, error } = await supabase
     .from('resource_requests')
     .select('*')
     .order('created_at', { ascending: false })
     .limit(limit);
+
+  if (error || !data) {
+    return { data, error };
+  }
+
+  // Get unique base URLs from resource_requests
+  const baseUrls = new Set<string>();
+  data.forEach((req) => {
+    const baseUrl = extractBaseUrl(req.resource_url);
+    if (baseUrl) baseUrls.add(baseUrl);
+  });
+
+  // Fetch resources for these base URLs
+  const { data: resources } = await supabase
+    .from('resources')
+    .select('base_url, name')
+    .in('base_url', Array.from(baseUrls));
+
+  // Create a map of base_url -> resource name
+  const resourceNameMap = new Map<string, string>();
+  resources?.forEach((resource) => {
+    resourceNameMap.set(resource.base_url, resource.name);
+  });
+
+  // Add resource_name to each request
+  const dataWithResourceNames = data.map((req) => {
+    const baseUrl = extractBaseUrl(req.resource_url);
+    const resourceName = baseUrl ? resourceNameMap.get(baseUrl) : null;
+    return {
+      ...req,
+      resource_name: resourceName || null,
+    };
+  });
+
+  return { data: dataWithResourceNames, error };
 }
 
 /**
@@ -167,6 +273,19 @@ export async function getResourceRequestById(requestId: string) {
     .select('*')
     .eq('request_id', requestId)
     .single();
+}
+
+/**
+ * Extract base URL from a full resource URL
+ */
+function extractBaseUrl(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    const urlObj = new URL(url);
+    return `${urlObj.protocol}//${urlObj.host}`;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -182,8 +301,48 @@ export async function getPaginatedResourceRequests(page = 1, pageSize = 20) {
     .order('created_at', { ascending: false })
     .range(from, to);
 
+  if (error || !data) {
+    return {
+      data,
+      error,
+      count: count || 0,
+      page,
+      pageSize,
+      totalPages: count ? Math.ceil(count / pageSize) : 0,
+    };
+  }
+
+  // Get unique base URLs from resource_requests
+  const baseUrls = new Set<string>();
+  data.forEach((req) => {
+    const baseUrl = extractBaseUrl(req.resource_url);
+    if (baseUrl) baseUrls.add(baseUrl);
+  });
+
+  // Fetch resources for these base URLs
+  const { data: resources } = await supabase
+    .from('resources')
+    .select('base_url, name')
+    .in('base_url', Array.from(baseUrls));
+
+  // Create a map of base_url -> resource name
+  const resourceNameMap = new Map<string, string>();
+  resources?.forEach((resource) => {
+    resourceNameMap.set(resource.base_url, resource.name);
+  });
+
+  // Add resource_name to each request
+  const dataWithResourceNames = data.map((req) => {
+    const baseUrl = extractBaseUrl(req.resource_url);
+    const resourceName = baseUrl ? resourceNameMap.get(baseUrl) : null;
+    return {
+      ...req,
+      resource_name: resourceName || null,
+    };
+  });
+
   return {
-    data,
+    data: dataWithResourceNames,
     error,
     count: count || 0,
     page,

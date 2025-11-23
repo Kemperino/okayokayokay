@@ -12,6 +12,7 @@ interface ResourceRequest {
   seller_description: any | null;
   tx_hash: string | null;
   resource_url: string | null;
+  resource_name?: string | null;
   status: string;
   error_message: string | null;
   escrow_contract_address: string | null;

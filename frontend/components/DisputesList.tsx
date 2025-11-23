@@ -74,7 +74,7 @@ export default function DisputesList({ disputes }: DisputesListProps) {
     <div className="space-y-4">
       {disputes.map((dispute) => {
         const description = getSellerDescription(dispute.seller_description);
-        const path = dispute.input_data?.path || dispute.resource_url || 'Unknown';
+        const resourceName = dispute.resource_name || dispute.input_data?.path || dispute.resource_url || 'Unknown';
         const statusLabel = dispute.contractStatus.status !== null 
           ? RequestStatusLabels[dispute.contractStatus.status]
           : 'Unknown';
@@ -89,14 +89,14 @@ export default function DisputesList({ disputes }: DisputesListProps) {
               <div className="flex items-start gap-3 flex-1">
                 {dispute.contractStatus.status !== null && getStatusIcon(dispute.contractStatus.status)}
                 <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-primary mb-1">
+                    {resourceName}
+                  </h3>
                   {description && (
-                    <h3 className="text-lg font-semibold text-primary mb-1">
+                    <p className="text-xs text-primary/60">
                       {description}
-                    </h3>
+                    </p>
                   )}
-                  <p className="text-sm text-primary/70 font-mono break-all">
-                    {path}
-                  </p>
                 </div>
               </div>
               <span
