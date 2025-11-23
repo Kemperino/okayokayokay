@@ -55,7 +55,7 @@ export async function makeX402RequestForSession(
           try {
             const publicClient = createPublicClient({
               chain: base,
-              transport: http(),
+              transport: http(process.env.NEXT_PUBLIC_BASE_RPC_URL),
             });
 
             const receipt = await publicClient.getTransactionReceipt({

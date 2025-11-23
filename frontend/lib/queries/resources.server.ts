@@ -168,3 +168,26 @@ export async function getResourceRequestById(requestId: string) {
     .eq('request_id', requestId)
     .single();
 }
+
+/**
+ * Get paginated resource requests
+ */
+export async function getPaginatedResourceRequests(page = 1, pageSize = 20) {
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error, count } = await supabase
+    .from('resource_requests')
+    .select('*', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(from, to);
+
+  return {
+    data,
+    error,
+    count: count || 0,
+    page,
+    pageSize,
+    totalPages: count ? Math.ceil(count / pageSize) : 0,
+  };
+}

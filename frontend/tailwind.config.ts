@@ -7,7 +7,21 @@ export default {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ["Figtree", "sans-serif"],
+      },
+      colors: {
+        default: "#27272A",
+        contrast: "#3F3F46",
+        primary: "#FAFAFA",
+        success: "#4ADE80",
+        warning: "#FACC15",
+        error: "#F87171",
+        highlight: "#EC762E",
+        background: "#09090B",
+      },
+    },
   },
   plugins: [],
 } satisfies Config;

@@ -102,7 +102,7 @@ export default function BuyerDisputes({
 
   if (!transactions || transactions.length === 0) {
     return (
-      <div className="border rounded-lg p-8 text-center text-gray-500">
+      <div className="border border-contrast rounded-lg p-8 text-center text-primary/60 bg-default">
         No transactions yet. Make x402 requests to see them here.
       </div>
     );
@@ -111,40 +111,40 @@ export default function BuyerDisputes({
   const getStatusColor = (status: DisputeStatus) => {
     switch (status) {
       case 'escrowed':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-highlight/20 text-highlight';
       case 'escrow_released':
-        return 'bg-green-100 text-green-800';
+        return 'bg-success/20 text-success';
       case 'dispute_opened':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-warning/20 text-warning';
       case 'dispute_escalated':
       case 'master_review_escalation':
-        return 'bg-orange-100 text-orange-800';
+        return 'bg-error/20 text-error';
       case 'seller_accepted':
-        return 'bg-green-100 text-green-800';
+        return 'bg-success/20 text-success';
       case 'dispute_resolved':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-success/20 text-success';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-contrast text-primary';
     }
   };
 
   const getStatusIcon = (status: DisputeStatus) => {
     if (['dispute_opened', 'dispute_escalated', 'master_review_escalation'].includes(status)) {
       return (
-        <svg className="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+        <svg className="w-5 h-5 text-warning" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
         </svg>
       );
     }
     if (['escrow_released', 'seller_accepted', 'dispute_resolved'].includes(status)) {
       return (
-        <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+        <svg className="w-5 h-5 text-success" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
         </svg>
       );
     }
     return (
-      <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+      <svg className="w-5 h-5 text-highlight" fill="currentColor" viewBox="0 0 20 20">
         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
       </svg>
     );
@@ -170,13 +170,13 @@ export default function BuyerDisputes({
   return (
     <div className="space-y-4">
       {/* Filter Tabs */}
-      <div className="flex gap-2 border-b border-gray-200">
+      <div className="flex gap-2 border-b border-contrast">
         <button
           onClick={() => setFilter('all')}
           className={`px-4 py-2 font-medium text-sm transition ${
             filter === 'all'
-              ? 'border-b-2 border-blue-600 text-blue-600'
-              : 'text-gray-600 hover:text-gray-900'
+              ? 'border-b-2 border-highlight text-highlight'
+              : 'text-primary/70 hover:text-primary'
           }`}
         >
           All ({transactions.length})
@@ -185,8 +185,8 @@ export default function BuyerDisputes({
           onClick={() => setFilter('unresolved')}
           className={`px-4 py-2 font-medium text-sm transition ${
             filter === 'unresolved'
-              ? 'border-b-2 border-blue-600 text-blue-600'
-              : 'text-gray-600 hover:text-gray-900'
+              ? 'border-b-2 border-highlight text-highlight'
+              : 'text-primary/70 hover:text-primary'
           }`}
         >
           Unresolved ({unresolvedCount})
@@ -195,8 +195,8 @@ export default function BuyerDisputes({
           onClick={() => setFilter('disputed')}
           className={`px-4 py-2 font-medium text-sm transition ${
             filter === 'disputed'
-              ? 'border-b-2 border-blue-600 text-blue-600'
-              : 'text-gray-600 hover:text-gray-900'
+              ? 'border-b-2 border-highlight text-highlight'
+              : 'text-primary/70 hover:text-primary'
           }`}
         >
           In Dispute ({disputedCount})
@@ -205,7 +205,7 @@ export default function BuyerDisputes({
 
       {/* Transactions List */}
       {filteredTransactions.length === 0 ? (
-        <div className="border rounded-lg p-8 text-center text-gray-500">
+        <div className="border border-contrast rounded-lg p-8 text-center text-primary/60 bg-default">
           No {filter === 'all' ? '' : filter} transactions found.
         </div>
       ) : (
@@ -217,18 +217,18 @@ export default function BuyerDisputes({
             return (
               <div
                 key={tx.request_id}
-                className={`border rounded-lg p-4 bg-white shadow-sm hover:shadow transition ${
-                  isDisputed ? 'border-yellow-300 bg-yellow-50' : ''
+                className={`border border-contrast rounded-lg p-4 bg-default shadow-sm hover:shadow transition ${
+                  isDisputed ? 'border-warning bg-warning/10' : ''
                 }`}
               >
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-3 flex-1">
                     {getStatusIcon(tx.status)}
                     <div>
-                      <div className="text-sm font-semibold text-gray-900 mb-1">
+                      <div className="text-sm font-semibold text-primary mb-1">
                         Request ID: {tx.request_id.slice(0, 16)}...
                       </div>
-                      <div className="text-lg font-bold text-gray-900">
+                      <div className="text-lg font-bold text-primary">
                         ${formatAmount(tx.amount)} USDC
                       </div>
                     </div>
@@ -242,50 +242,50 @@ export default function BuyerDisputes({
                       DB: {tx.status.replace(/_/g, ' ').toUpperCase()}
                     </span>
                     {tx.contractStatusLabel && (
-                      <span className="px-2 py-1 rounded text-xs font-medium whitespace-nowrap bg-indigo-100 text-indigo-800">
+                      <span className="px-2 py-1 rounded text-xs font-medium whitespace-nowrap bg-highlight/20 text-highlight">
                         Chain: {tx.contractStatusLabel}
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-primary/70">
                   <div>
-                    <span className="font-semibold">Seller:</span>{' '}
-                    <code className="bg-gray-100 px-1 py-0.5 rounded">
+                    <span className="font-semibold text-primary/80">Seller:</span>{' '}
+                    <code className="bg-contrast px-1 py-0.5 rounded text-primary">
                       {formatAddress(tx.seller_id)}
                     </code>
                   </div>
 
                   {tx.payment_settled_at && (
                     <div>
-                      <span className="font-semibold">Payment Settled:</span>{' '}
+                      <span className="font-semibold text-primary/80">Payment Settled:</span>{' '}
                       {new Date(tx.payment_settled_at).toLocaleString()}
                     </div>
                   )}
 
                   {tx.dispute_window_expires_at && (
                     <div>
-                      <span className="font-semibold">Dispute Window Expires:</span>{' '}
+                      <span className="font-semibold text-primary/80">Dispute Window Expires:</span>{' '}
                       {new Date(tx.dispute_window_expires_at).toLocaleString()}
                     </div>
                   )}
 
-                  <div className="text-gray-500">
-                    <span className="font-semibold">Created:</span>{' '}
+                  <div className="text-primary/50">
+                    <span className="font-semibold text-primary/80">Created:</span>{' '}
                     {new Date(tx.created_at).toLocaleString()}
                   </div>
                 </div>
 
                 {isDisputed && (
-                  <div className="mt-3 pt-3 border-t border-yellow-200">
+                  <div className="mt-3 pt-3 border-t border-warning">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-sm text-yellow-700">
+                      <div className="flex items-center gap-2 text-sm text-warning">
                         <span className="font-semibold">
                           This transaction is in dispute
                         </span>
                       </div>
-                      <button className="text-xs bg-yellow-600 text-white px-3 py-1 rounded hover:bg-yellow-700 transition">
+                      <button className="text-xs bg-warning text-background px-3 py-1 rounded hover:bg-warning/90 transition">
                         View Details
                       </button>
                     </div>
@@ -293,12 +293,12 @@ export default function BuyerDisputes({
                 )}
 
                 {isUnresolved && !isDisputed && (
-                  <div className="mt-3 pt-3 border-t">
+                  <div className="mt-3 pt-3 border-t border-contrast">
                     <div className="flex items-center justify-between">
-                      <div className="text-sm text-blue-700">
+                      <div className="text-sm text-highlight">
                         <span className="font-semibold">Action available</span>
                       </div>
-                      <button className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition">
+                      <button className="text-xs bg-highlight text-primary px-3 py-1 rounded hover:bg-highlight/90 transition">
                         File Dispute
                       </button>
                     </div>

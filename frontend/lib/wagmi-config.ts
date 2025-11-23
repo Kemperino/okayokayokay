@@ -18,6 +18,6 @@ export const wagmiConfig = createConfig({
     ...(projectId ? [walletConnect({ projectId })] : []),
   ],
   transports: {
-    [base.id]: http(),
+    [base.id]: http(process.env.NEXT_PUBLIC_BASE_RPC_URL),
   },
 });

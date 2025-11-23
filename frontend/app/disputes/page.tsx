@@ -1,5 +1,5 @@
-import BuyerDisputesWrapper from '@/components/BuyerDisputesWrapper';
-import Link from 'next/link';
+import BuyerDisputesWrapper from "@/components/BuyerDisputesWrapper";
+import Link from "next/link";
 
 interface PageProps {
   searchParams: Promise<{ contract?: string }>;
@@ -14,16 +14,19 @@ export default async function DisputesPage({ searchParams }: PageProps) {
       <div className="mb-6">
         <Link
           href="/"
-          className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-2"
+          className="text-sm text-primary/70 hover:text-primary flex items-center gap-2"
         >
           ← Back to Home
         </Link>
       </div>
 
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">My Transactions & Disputes</h1>
-        <p className="text-gray-600">
-          View your transaction history, track disputes, and monitor on-chain status
+        <h1 className="text-3xl font-bold mb-2 text-primary">
+          My Transactions & Disputes
+        </h1>
+        <p className="text-primary/70">
+          View your transaction history, track disputes, and monitor on-chain
+          status
         </p>
       </div>
 
