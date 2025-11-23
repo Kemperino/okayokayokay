@@ -6,7 +6,14 @@ import "../src/DisputeEscrowFactory.sol";
 
 contract RegisterServiceScript is Script {
     function run() external {
-        uint256 privateKey = vm.envUint("SERVICE_PRIVATE_KEY");
+        // Use PRIVATE_KEY if set, otherwise fall back to SERVICE_PRIVATE_KEY
+        uint256 privateKey;
+        try vm.envUint("PRIVATE_KEY") returns (uint256 key) {
+            privateKey = key;
+        } catch {
+            privateKey = vm.envUint("SERVICE_PRIVATE_KEY");
+        }
+
         address factoryAddress = vm.envAddress("FACTORY_ADDRESS");
 
         // Service metadata
@@ -23,7 +30,8 @@ contract RegisterServiceScript is Script {
         vm.stopBroadcast();
 
         console.log("===== Service Registration Successful =====");
-        console.log("Service Provider:", vm.addr(privateKey));
+        console.log("Transaction Sender:", vm.addr(privateKey));
+        console.log("Service Public Key:", vm.toString(publicKey));
         console.log("Escrow Contract:", escrowContract);
         console.log("Metadata URI:", metadataURI);
         console.log("==========================================");

@@ -58,12 +58,32 @@ check_env() {
 # 1. Register Service
 register_service() {
     echo -e "${GREEN}Registering Service...${NC}"
+    echo ""
+    echo "Note: The service will be registered with the provided public key."
+    echo "The transaction sender (private key) will become the service provider."
+    echo ""
 
-    read -p "Service Public Key (hex): " PUBLIC_KEY
-    read -p "Metadata URI: " METADATA_URI
+    read -p "Service Public Key (hex, e.g., 0x04...): " PUBLIC_KEY
+    read -p "Metadata URI (e.g., https://example.com/metadata): " METADATA_URI
+    read -s -p "Private Key of transaction sender (will become the service provider): " SENDER_KEY
+    echo "" # Add newline after hidden input
+
+    echo ""
+    echo -e "${YELLOW}Confirming registration details:${NC}"
+    echo "Public Key: $PUBLIC_KEY"
+    echo "Metadata URI: $METADATA_URI"
+    echo "Sender Address: $(cast wallet address $SENDER_KEY 2>/dev/null || echo 'Invalid key')"
+    echo ""
+    read -p "Continue? (y/n): " CONFIRM
+
+    if [ "$CONFIRM" != "y" ]; then
+        echo "Registration cancelled."
+        return
+    fi
 
     SERVICE_PUBLIC_KEY=$PUBLIC_KEY \
     SERVICE_METADATA_URI=$METADATA_URI \
+    PRIVATE_KEY=$SENDER_KEY \
     forge script script/RegisterService.s.sol:RegisterServiceScript \
         --rpc-url $RPC_URL \
         --broadcast \
@@ -77,7 +97,8 @@ set_operator() {
     check_env "FACTORY_ADDRESS" || return
 
     read -p "New Operator Address: " OPERATOR_ADDR
-    read -p "Admin Private Key: " ADMIN_KEY
+    read -s -p "Admin Private Key: " ADMIN_KEY
+    echo "" # Add newline after hidden input
 
     NEW_OPERATOR_ADDRESS=$OPERATOR_ADDR \
     ADMIN_PRIVATE_KEY=$ADMIN_KEY \
@@ -94,7 +115,8 @@ set_dispute_agent() {
     check_env "FACTORY_ADDRESS" || return
 
     read -p "New Dispute Agent Address: " AGENT_ADDR
-    read -p "Admin Private Key: " ADMIN_KEY
+    read -s -p "Admin Private Key: " ADMIN_KEY
+    echo "" # Add newline after hidden input
 
     NEW_DISPUTE_AGENT_ADDRESS=$AGENT_ADDR \
     ADMIN_PRIVATE_KEY=$ADMIN_KEY \
@@ -112,7 +134,8 @@ fund_escrow() {
 
     read -p "Escrow Contract Address: " ESCROW_ADDR
     read -p "Amount (in USDC smallest unit, 6 decimals): " AMOUNT
-    read -p "Facilitator Private Key: " FACILITATOR_KEY
+    read -s -p "Facilitator Private Key: " FACILITATOR_KEY
+    echo "" # Add newline after hidden input
 
     ESCROW_CONTRACT_ADDRESS=$ESCROW_ADDR \
     FUND_AMOUNT=$AMOUNT \
@@ -132,7 +155,8 @@ confirm_escrow() {
     read -p "Buyer Address: " BUYER_ADDR
     read -p "Amount: " AMOUNT
     read -p "API Response Hash (bytes32): " API_HASH
-    read -p "Operator Private Key: " OPERATOR_KEY
+    read -s -p "Operator Private Key: " OPERATOR_KEY
+    echo "" # Add newline after hidden input
 
     ESCROW_CONTRACT_ADDRESS=$ESCROW_ADDR \
     REQUEST_ID=$REQUEST_ID \
@@ -152,7 +176,8 @@ release_escrow() {
 
     read -p "Escrow Contract Address: " ESCROW_ADDR
     read -p "Request ID (bytes32): " REQUEST_ID
-    read -p "Caller Private Key: " CALLER_KEY
+    read -s -p "Caller Private Key: " CALLER_KEY
+    echo "" # Add newline after hidden input
 
     ESCROW_CONTRACT_ADDRESS=$ESCROW_ADDR \
     REQUEST_ID=$REQUEST_ID \
@@ -169,7 +194,8 @@ open_dispute() {
 
     read -p "Escrow Contract Address: " ESCROW_ADDR
     read -p "Request ID (bytes32): " REQUEST_ID
-    read -p "Buyer Private Key: " BUYER_KEY
+    read -s -p "Buyer Private Key: " BUYER_KEY
+    echo "" # Add newline after hidden input
 
     ESCROW_CONTRACT_ADDRESS=$ESCROW_ADDR \
     REQUEST_ID=$REQUEST_ID \
@@ -187,7 +213,8 @@ respond_dispute() {
     read -p "Escrow Contract Address: " ESCROW_ADDR
     read -p "Request ID (bytes32): " REQUEST_ID
     read -p "Accept Refund? (true/false): " ACCEPT
-    read -p "Seller Private Key: " SELLER_KEY
+    read -s -p "Seller Private Key: " SELLER_KEY
+    echo "" # Add newline after hidden input
 
     ESCROW_CONTRACT_ADDRESS=$ESCROW_ADDR \
     REQUEST_ID=$REQUEST_ID \
@@ -205,7 +232,8 @@ escalate_dispute() {
 
     read -p "Escrow Contract Address: " ESCROW_ADDR
     read -p "Request ID (bytes32): " REQUEST_ID
-    read -p "Buyer Private Key: " BUYER_KEY
+    read -s -p "Buyer Private Key: " BUYER_KEY
+    echo "" # Add newline after hidden input
 
     ESCROW_CONTRACT_ADDRESS=$ESCROW_ADDR \
     REQUEST_ID=$REQUEST_ID \
@@ -223,7 +251,8 @@ resolve_dispute() {
     read -p "Escrow Contract Address: " ESCROW_ADDR
     read -p "Request ID (bytes32): " REQUEST_ID
     read -p "Refund Buyer? (true/false): " REFUND
-    read -p "Dispute Agent Private Key: " AGENT_KEY
+    read -s -p "Dispute Agent Private Key: " AGENT_KEY
+    echo "" # Add newline after hidden input
 
     ESCROW_CONTRACT_ADDRESS=$ESCROW_ADDR \
     REQUEST_ID=$REQUEST_ID \
@@ -241,7 +270,8 @@ cancel_dispute() {
 
     read -p "Escrow Contract Address: " ESCROW_ADDR
     read -p "Request ID (bytes32): " REQUEST_ID
-    read -p "Buyer Private Key: " BUYER_KEY
+    read -s -p "Buyer Private Key: " BUYER_KEY
+    echo "" # Add newline after hidden input
 
     ESCROW_CONTRACT_ADDRESS=$ESCROW_ADDR \
     REQUEST_ID=$REQUEST_ID \
