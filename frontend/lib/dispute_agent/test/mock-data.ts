@@ -1,13 +1,39 @@
+import { ethers } from 'ethers';
+
+const DISPUTE_ESCALATED_SIGNATURE = ethers.id('DisputeEscalated(bytes32)');
+const REQUEST_ID = '0x1111111111111111111111111111111111111111111111111111111111111111';
+
 export const mockWebhookEvent = {
-  event: 'DisputeEscalated',
-  contractAddress: '0x1234567890123456789012345678901234567890',
-  transactionHash: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
-  blockNumber: 123456,
-  timestamp: Date.now(),
-  args: {
-    requestId: '0x1111111111111111111111111111111111111111111111111111111111111111'
-  },
-  network: 'base-sepolia'
+  webhookId: 'wh_test123',
+  id: 'whevt_test456',
+  createdAt: new Date().toISOString(),
+  type: 'ADDRESS_ACTIVITY' as const,
+  event: {
+    network: 'BASE_SEPOLIA',
+    activity: [{
+      blockNum: '0x1e240',
+      hash: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
+      fromAddress: '0xBuyer1234567890123456789012345678901234',
+      toAddress: '0x1234567890123456789012345678901234567890',
+      value: 0,
+      asset: 'ETH',
+      category: 'external',
+      log: {
+        address: '0x1234567890123456789012345678901234567890',
+        topics: [
+          DISPUTE_ESCALATED_SIGNATURE,
+          REQUEST_ID
+        ],
+        data: '0x',
+        blockNumber: '0x1e240',
+        transactionHash: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
+        transactionIndex: '0x0',
+        blockHash: '0xblockhash1234567890123456789012345678901234567890123456789012345',
+        logIndex: '0x0',
+        removed: false
+      }
+    }]
+  }
 };
 
 export const mockServiceRequest = {
