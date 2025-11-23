@@ -1,4 +1,4 @@
-import { getResourceRequestById } from "@/lib/queries/resources.server";
+import { getResourceRequestById, getResourceByUrl } from "@/lib/queries/resources.server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import TransactionDetailClient from "@/components/TransactionDetailClient";
@@ -10,6 +10,15 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
+function extractBaseUrl(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    const urlObj = new URL(url);
+    return `${urlObj.protocol}//${urlObj.host}`;
+  } catch {
+    return null;
+  }
+}
 
 function getSellerDescription(sellerDescription: any): string | null {
   if (!sellerDescription) return null;
@@ -29,7 +38,6 @@ function getSellerDescription(sellerDescription: any): string | null {
 function getPriceFromSellerDescription(sellerDescription: any): bigint | null {
   if (!sellerDescription) return null;
 
-  // x402 format: accepts[].maxAmountRequired (already in USDC wei format, 6 decimals)
   if (sellerDescription.accepts && Array.isArray(sellerDescription.accepts)) {
     const firstAccept = sellerDescription.accepts[0];
     const maxAmount = firstAccept?.maxAmountRequired;
@@ -38,7 +46,7 @@ function getPriceFromSellerDescription(sellerDescription: any): bigint | null {
       try {
         return BigInt(maxAmount);
       } catch (e) {
-        console.error('Failed to parse maxAmountRequired:', maxAmount, e);
+        console.error('[TransactionDetail] Failed to parse maxAmountRequired:', maxAmount, e);
       }
     }
     if (typeof maxAmount === 'number') {
@@ -46,7 +54,6 @@ function getPriceFromSellerDescription(sellerDescription: any): bigint | null {
     }
   }
 
-  // Fallback: check for payment.pricePerRequest (if in dollars, multiply by 1e6)
   if (sellerDescription.payment?.pricePerRequest) {
     const price = sellerDescription.payment.pricePerRequest;
     if (typeof price === 'number') {
@@ -78,7 +85,18 @@ export default async function TransactionDetailPage({ params }: PageProps) {
   const statusData = batchData.get(request.request_id);
 
   const description = getSellerDescription(request.seller_description);
-  const priceAmount = getPriceFromSellerDescription(request.seller_description);
+  let priceAmount = getPriceFromSellerDescription(request.seller_description);
+
+  if (!priceAmount && request.resource_url) {
+    const baseUrl = extractBaseUrl(request.resource_url);
+    if (baseUrl) {
+      const { data: resource } = await getResourceByUrl(baseUrl);
+      if (resource?.price_per_request) {
+        priceAmount = BigInt(Math.floor(resource.price_per_request * 1e6));
+      }
+    }
+  }
+
   const params_data = request.input_data?.params || {};
   const path = request.input_data?.path || request.resource_url || "Unknown";
 
