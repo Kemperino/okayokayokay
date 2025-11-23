@@ -10,7 +10,7 @@ interface MoneyFlowDiagramProps {
 
 const formatUSDC = (amount: bigint): string => {
   const usdc = Number(amount) / 1e6;
-  return usdc.toFixed(2);
+  return usdc.toFixed(3);
 };
 
 export default function MoneyFlowDiagram({ 
@@ -18,7 +18,7 @@ export default function MoneyFlowDiagram({
   amount,
   buyerRefunded = false 
 }: MoneyFlowDiagramProps) {
-  const usdcAmount = amount ? formatUSDC(amount) : '0.0001';
+  const usdcAmount = amount ? formatUSDC(amount) : '0';
 
   const hasEscrowed = status !== null && status >= 1;
   const releasedToSeller = status === 2 || (status === 7 && !buyerRefunded);

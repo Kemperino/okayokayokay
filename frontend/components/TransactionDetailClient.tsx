@@ -319,7 +319,7 @@ export default function TransactionDetailClient({
     );
   }
 
-  const displayAmount = BigInt(1000) || amount || statusData?.amount || fetchedAmount;
+  const displayAmount = amount || statusData?.amount || fetchedAmount || null;
   
   const shouldShowCountdown = 
     countdown && 
