@@ -58,8 +58,8 @@ export default async function TransactionDetailPage({ params }: PageProps) {
 
       {/* Main Card */}
       <div className="bg-default border border-contrast rounded-lg p-6 shadow-sm mb-6">
-        <div className="flex justify-between items-start mb-6">
-          <div className="flex-1">
+        <div className="flex justify-between items-start gap-6 mb-6">
+          <div className="flex-1 min-w-0">
             {description && (
               <h2 className="text-xl font-semibold text-primary mb-2">
                 {description}
@@ -70,7 +70,7 @@ export default async function TransactionDetailPage({ params }: PageProps) {
             </div>
           </div>
           {request.escrow_contract_address && (
-            <div className="ml-3">
+            <div className="flex-shrink-0">
               <ContractStatusBadge
                 requestId={request.request_id}
                 escrowContractAddress={request.escrow_contract_address}
@@ -90,14 +90,13 @@ export default async function TransactionDetailPage({ params }: PageProps) {
         </div>
 
         {/* Grid of Details */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="text-sm font-semibold text-primary/80 block mb-1">
               User Address
             </label>
-            <code className="text-xs bg-contrast px-2 py-1 rounded font-mono text-primary">
-              {request.user_address.slice(0, 10)}...
-              {request.user_address.slice(-8)}
+            <code className="text-xs bg-contrast px-3 py-2 rounded block font-mono break-all text-primary">
+              {request.user_address}
             </code>
           </div>
 
@@ -106,19 +105,18 @@ export default async function TransactionDetailPage({ params }: PageProps) {
               <label className="text-sm font-semibold text-primary/80 block mb-1">
                 Seller Address
               </label>
-              <code className="text-xs bg-contrast px-2 py-1 rounded font-mono text-primary">
-                {request.seller_address.slice(0, 10)}...
-                {request.seller_address.slice(-8)}
+              <code className="text-xs bg-contrast px-3 py-2 rounded block font-mono break-all text-primary">
+                {request.seller_address}
               </code>
             </div>
           )}
 
           {request.tx_hash && (
-            <div>
+            <div className="lg:col-span-2">
               <label className="text-sm font-semibold text-primary/80 block mb-1">
                 Transaction Hash
               </label>
-              <code className="text-xs bg-contrast px-2 py-1 rounded font-mono text-primary break-all">
+              <code className="text-xs bg-contrast px-3 py-2 rounded block font-mono break-all text-primary">
                 {request.tx_hash}
               </code>
             </div>
