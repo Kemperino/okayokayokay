@@ -75,7 +75,6 @@ export const DisputeEscrowABI = [
   {
     inputs: [
       { internalType: 'bytes32', name: 'requestId', type: 'bytes32' },
-      { internalType: 'string', name: 'claimDescription', type: 'string' },
     ],
     name: 'openDispute',
     outputs: [],
