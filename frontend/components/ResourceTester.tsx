@@ -121,7 +121,7 @@ export default function ResourceTester({ resource }: { resource: Resource }) {
         </div>
         <button
           onClick={addParam}
-          className="mt-2 text-sm text-highlight hover:underline"
+          className="mt-2 text-sm text-primary/60 hover:text-primary transition"
         >
           + Add parameter
         </button>
@@ -132,7 +132,7 @@ export default function ResourceTester({ resource }: { resource: Resource }) {
         disabled={loading}
         className="w-full bg-success text-background px-4 py-3 rounded hover:bg-success/90 transition disabled:opacity-50 font-medium"
       >
-        {loading ? "Testing..." : "Test Request (Auto-Pay)"}
+        {loading ? "Magic Internet Money" : "Execute x402 Transaction"}
       </button>
 
       {error && (

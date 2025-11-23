@@ -9,60 +9,10 @@ export interface ValidationResult {
 /**
  * Validates incoming webhook event data
  */
-export async function validateWebhookEvent(event: WebhookEvent): Promise<ValidationResult> {
+export async function validateWebhookEvent(payload: WebhookEvent): Promise<ValidationResult> {
   try {
-    // Check required fields
-    if (!event.event) {
-      return { valid: false, error: 'Missing event type' };
-    }
-
-    if (!event.contractAddress) {
-      return { valid: false, error: 'Missing contract address' };
-    }
-
-    if (!event.transactionHash) {
-      return { valid: false, error: 'Missing transaction hash' };
-    }
-
-    if (!event.blockNumber || event.blockNumber <= 0) {
-      return { valid: false, error: 'Invalid block number' };
-    }
-
-    if (!event.args || !event.args.requestId) {
-      return { valid: false, error: 'Missing request ID in event args' };
-    }
-
-    // Validate Ethereum address format
-    if (!ethers.isAddress(event.contractAddress)) {
-      return { valid: false, error: 'Invalid contract address format' };
-    }
-
-    // Validate transaction hash format (0x + 64 hex characters)
-    const txHashRegex = /^0x[a-fA-F0-9]{64}$/;
-    if (!txHashRegex.test(event.transactionHash)) {
-      return { valid: false, error: 'Invalid transaction hash format' };
-    }
-
-    // Validate request ID format (bytes32: 0x + 64 hex characters)
-    const requestIdRegex = /^0x[a-fA-F0-9]{64}$/;
-    if (!requestIdRegex.test(event.args.requestId)) {
-      return { valid: false, error: 'Invalid request ID format' };
-    }
-
-    // Validate network if specified
-    const supportedNetworks = ['base-sepolia', 'base', 'base-mainnet', 'ethereum-sepolia', 'ethereum'];
-    if (event.network && !supportedNetworks.includes(event.network)) {
-      return { valid: false, error: `Unsupported network: ${event.network}` };
-    }
-
-    // Additional validation: Check if the contract is a valid DisputeEscrow contract
-    // This could be done by checking against the factory contract
-    const factoryAddress = process.env.FACTORY_CONTRACT_ADDRESS;
-    if (factoryAddress) {
-      const isValidEscrow = await verifyEscrowContract(event.contractAddress, factoryAddress);
-      if (!isValidEscrow) {
-        return { valid: false, error: 'Contract is not a valid DisputeEscrow contract' };
-      }
+    if (!payload.event?.data?.block?.logs || payload.event.data.block.logs.length === 0) {
+      return { valid: false, error: 'No logs in webhook payload' };
     }
 
     return { valid: true };

@@ -1,15 +1,27 @@
-export interface WebhookEvent {
-  // Blockchain event data
-  event: string; // "DisputeEscalated"
-  contractAddress: string; // DisputeEscrow contract address
-  transactionHash: string;
-  blockNumber: number;
-  timestamp: number;
-  args: {
-    requestId: string; // bytes32
+export interface AlchemyWebhookPayload {
+  webhookId: string;
+  id: string;
+  createdAt: string;
+  type: 'GRAPHQL';
+  event: {
+    data: {
+      block: {
+        logs: Array<{
+          account: { address: string };
+          topics: string[];
+          data: string;
+          transaction: {
+            hash: string;
+          };
+        }>;
+      };
+    };
+    sequenceNumber: string;
+    network: string;
   };
-  network: string; // e.g., "base-sepolia"
 }
+
+export type WebhookEvent = AlchemyWebhookPayload;
 
 export interface ServiceRequest {
   buyer: string;

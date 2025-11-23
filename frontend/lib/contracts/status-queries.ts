@@ -3,14 +3,11 @@
  * These functions work with both CDP wallets (buyer) and wagmi (merchant)
  */
 
-import { createPublicClient, http, type Address, type Hex } from 'viem';
-import { base } from 'viem/chains';
-import { DisputeEscrowABI, RequestStatus } from './DisputeEscrowABI';
-import { DisputeEscrowFactoryABI } from './DisputeEscrowFactoryABI';
-import type {
-  ServiceRequest,
-  ServiceRequestWithMetadata,
-} from './types';
+import { createPublicClient, http, type Address, type Hex } from "viem";
+import { base } from "viem/chains";
+import { DisputeEscrowABI, RequestStatus } from "./DisputeEscrowABI";
+import { DisputeEscrowFactoryABI } from "./DisputeEscrowFactoryABI";
+import type { ServiceRequest, ServiceRequestWithMetadata } from "./types";
 import {
   canOpenDispute,
   canEscalateDispute,
@@ -18,13 +15,17 @@ import {
   canReleaseEscrow,
   getTimeUntilDeadline,
   getStatusDescription,
-} from './types';
+} from "./types";
 
 // Create a public client for reading from the blockchain
 // Use BASE_RPC_URL (server-side) or NEXT_PUBLIC_BASE_RPC_URL (client-side)
 const publicClient = createPublicClient({
   chain: base,
-  transport: http(process.env.BASE_RPC_URL || process.env.NEXT_PUBLIC_BASE_RPC_URL || undefined),
+  transport: http(
+    process.env.BASE_RPC_URL ||
+      process.env.NEXT_PUBLIC_BASE_RPC_URL ||
+      undefined
+  ),
 });
 
 /**
@@ -43,7 +44,9 @@ function getFactoryAddress(): Address | null {
  * Get the escrow contract address for a specific service provider
  * @param serviceAddress - Service provider's wallet address
  */
-export async function getEscrowAddressForService(serviceAddress: Address): Promise<Address | null> {
+export async function getEscrowAddressForService(
+  serviceAddress: Address
+): Promise<Address | null> {
   try {
     const factoryAddress = getFactoryAddress();
 
@@ -55,18 +58,18 @@ export async function getEscrowAddressForService(serviceAddress: Address): Promi
     const escrowAddress = await publicClient.readContract({
       address: factoryAddress,
       abi: DisputeEscrowFactoryABI,
-      functionName: 'getServiceEscrow',
+      functionName: "getServiceEscrow",
       args: [serviceAddress],
     });
 
     // Check if it's the zero address
-    if (escrowAddress === '0x0000000000000000000000000000000000000000') {
+    if (escrowAddress === "0x0000000000000000000000000000000000000000") {
       return null;
     }
 
     return escrowAddress as Address;
   } catch (error) {
-    console.error('Error getting escrow address for service:', error);
+    console.error("Error getting escrow address for service:", error);
     return null;
   }
 }
@@ -84,12 +87,12 @@ export async function getRequestDetails(
     const result = await publicClient.readContract({
       address: escrowAddress,
       abi: DisputeEscrowABI,
-      functionName: 'requests',
+      functionName: "requests",
       args: [requestId],
     });
 
     // If buyer is zero address, request doesn't exist
-    if (result[0] === '0x0000000000000000000000000000000000000000') {
+    if (result[0] === "0x0000000000000000000000000000000000000000") {
       return null;
     }
 
@@ -105,7 +108,7 @@ export async function getRequestDetails(
       sellerRejected: result[8] as boolean,
     };
   } catch (error) {
-    console.error('Error reading request from contract:', error);
+    console.error("Error reading request from contract:", error);
     return null;
   }
 }
@@ -151,7 +154,7 @@ export async function getRequestStatus(
   escrowAddress: Address
 ): Promise<RequestStatus | null> {
   try {
-    console.log('[getRequestStatus] Calling contract.getRequestStatus:', {
+    console.log("[getRequestStatus] Calling contract.getRequestStatus:", {
       address: escrowAddress,
       requestId,
     });
@@ -159,15 +162,62 @@ export async function getRequestStatus(
     const status = await publicClient.readContract({
       address: escrowAddress,
       abi: DisputeEscrowABI,
-      functionName: 'getRequestStatus',
+      functionName: "getRequestStatus",
       args: [requestId],
     });
 
-    console.log('[getRequestStatus] Raw status returned:', status, 'Type:', typeof status);
+    console.log(
+      "[getRequestStatus] Raw status returned:",
+      status,
+      "Type:",
+      typeof status
+    );
 
     return status as RequestStatus;
   } catch (error) {
-    console.error('[getRequestStatus] Error reading request status from contract:', error);
+    console.error(
+      "[getRequestStatus] Error reading request status from contract:",
+      error
+    );
+    return null;
+  }
+}
+
+/**
+ * Get just the status of a request
+ * @param requestId - Request ID (32-byte hex)
+ * @param escrowAddress - Escrow contract address
+ */
+export async function getRequestNextDeadline(
+  requestId: Hex,
+  escrowAddress: Address
+): Promise<any | null> {
+  try {
+    console.log("[getRequestStatus] Calling contract.getRequestStatus:", {
+      address: escrowAddress,
+      requestId,
+    });
+
+    const status = await publicClient.readContract({
+      address: escrowAddress,
+      abi: DisputeEscrowABI,
+      functionName: "requests",
+      args: [requestId],
+    });
+
+    console.log(
+      "[getRequestStatus] Raw status returned:",
+      status,
+      "Type:",
+      typeof status
+    );
+
+    return status;
+  } catch (error) {
+    console.error(
+      "[getRequestStatus] Error reading request status from contract:",
+      error
+    );
     return null;
   }
 }
@@ -185,13 +235,13 @@ export async function checkSellerCanRespond(
     const canRespond = await publicClient.readContract({
       address: escrowAddress,
       abi: DisputeEscrowABI,
-      functionName: 'canSellerRespond',
+      functionName: "canSellerRespond",
       args: [requestId],
     });
 
     return canRespond as boolean;
   } catch (error) {
-    console.error('Error checking if seller can respond:', error);
+    console.error("Error checking if seller can respond:", error);
     return false;
   }
 }
@@ -200,17 +250,19 @@ export async function checkSellerCanRespond(
  * Get the service provider address for an escrow contract
  * @param escrowAddress - Escrow contract address
  */
-export async function getServiceProvider(escrowAddress: Address): Promise<Address | null> {
+export async function getServiceProvider(
+  escrowAddress: Address
+): Promise<Address | null> {
   try {
     const provider = await publicClient.readContract({
       address: escrowAddress,
       abi: DisputeEscrowABI,
-      functionName: 'serviceProvider',
+      functionName: "serviceProvider",
     });
 
     return provider as Address;
   } catch (error) {
-    console.error('Error reading service provider from contract:', error);
+    console.error("Error reading service provider from contract:", error);
     return null;
   }
 }
@@ -219,17 +271,19 @@ export async function getServiceProvider(escrowAddress: Address): Promise<Addres
  * Get allocated balance (sum of all active request amounts)
  * @param escrowAddress - Escrow contract address
  */
-export async function getAllocatedBalance(escrowAddress: Address): Promise<bigint | null> {
+export async function getAllocatedBalance(
+  escrowAddress: Address
+): Promise<bigint | null> {
   try {
     const balance = await publicClient.readContract({
       address: escrowAddress,
       abi: DisputeEscrowABI,
-      functionName: 'allocatedBalance',
+      functionName: "allocatedBalance",
     });
 
     return balance as bigint;
   } catch (error) {
-    console.error('Error reading allocated balance from contract:', error);
+    console.error("Error reading allocated balance from contract:", error);
     return null;
   }
 }
@@ -238,17 +292,19 @@ export async function getAllocatedBalance(escrowAddress: Address): Promise<bigin
  * Get unallocated balance (funds available for new requests)
  * @param escrowAddress - Escrow contract address
  */
-export async function getUnallocatedBalance(escrowAddress: Address): Promise<bigint | null> {
+export async function getUnallocatedBalance(
+  escrowAddress: Address
+): Promise<bigint | null> {
   try {
     const balance = await publicClient.readContract({
       address: escrowAddress,
       abi: DisputeEscrowABI,
-      functionName: 'getUnallocatedBalance',
+      functionName: "getUnallocatedBalance",
     });
 
     return balance as bigint;
   } catch (error) {
-    console.error('Error reading unallocated balance from contract:', error);
+    console.error("Error reading unallocated balance from contract:", error);
     return null;
   }
 }
@@ -283,7 +339,10 @@ export async function batchGetRequestDetails(
 
   await Promise.all(
     requests.map(async ({ requestId, escrowAddress }) => {
-      const details = await getRequestDetailsWithMetadata(requestId, escrowAddress);
+      const details = await getRequestDetailsWithMetadata(
+        requestId,
+        escrowAddress
+      );
       results.set(requestId, details);
     })
   );

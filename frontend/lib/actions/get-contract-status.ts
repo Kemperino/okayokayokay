@@ -1,7 +1,13 @@
-'use server';
+"use server";
 
-import { getRequestStatus, getRequestDetails, RequestStatusLabels, RequestStatus } from '@/lib/contracts';
-import type { Hex, Address } from 'viem';
+import {
+  getRequestStatus,
+  getRequestDetails,
+  RequestStatusLabels,
+  RequestStatus,
+} from "@/lib/contracts";
+import type { Hex, Address } from "viem";
+import { getRequestNextDeadline } from "../contracts/status-queries";
 
 export interface ContractStatusResult {
   status: RequestStatus | null;
@@ -23,13 +29,16 @@ function getRequestCacheKey(requestId: Hex, escrowAddress: Address): string {
   return `${escrowAddress.toLowerCase()}:${requestId.toLowerCase()}`;
 }
 
-async function getCachedRequestDetails(requestId: Hex, escrowAddress: Address): Promise<RequestDetailsResult> {
+async function getCachedRequestDetails(
+  requestId: Hex,
+  escrowAddress: Address
+): Promise<RequestDetailsResult> {
   const key = getRequestCacheKey(requestId, escrowAddress);
   const now = Date.now();
   const cached = requestDetailsCache.get(key);
 
   // Use cache only if it's less than 5 seconds old
-  if (cached && (now - cached.timestamp) < CACHE_TTL) {
+  if (cached && now - cached.timestamp < CACHE_TTL) {
     try {
       return await cached.promise;
     } catch (error) {
@@ -53,10 +62,13 @@ async function getCachedRequestDetails(requestId: Hex, escrowAddress: Address): 
 /**
  * Clear the cache for a specific request (useful after transactions)
  */
-export async function clearRequestCache(requestId: string, escrowAddress: string) {
+export async function clearRequestCache(
+  requestId: string,
+  escrowAddress: string
+) {
   const key = `${escrowAddress.toLowerCase()}:${requestId.toLowerCase()}`;
   requestDetailsCache.delete(key);
-  console.log('[clearRequestCache] Cleared cache for:', key);
+  console.log("[clearRequestCache] Cleared cache for:", key);
 }
 
 /**
@@ -71,29 +83,34 @@ export async function getContractStatus(
   if (!escrowContractAddress) {
     return {
       status: null,
-      statusLabel: 'No escrow',
+      statusLabel: "No escrow",
       hasStatus: false,
     };
   }
 
   try {
     // Ensure request ID is in hex format
-    const requestIdHex = requestId.startsWith('0x') ? (requestId as Hex) : (`0x${requestId}` as Hex);
+    const requestIdHex = requestId.startsWith("0x")
+      ? (requestId as Hex)
+      : (`0x${requestId}` as Hex);
 
-    console.log('[getContractStatus] Querying contract:', {
+    console.log("[getContractStatus] Querying contract:", {
       requestId: requestIdHex,
       escrowAddress: escrowContractAddress,
     });
 
     // Fetch status from blockchain
-    const status = await getRequestStatus(requestIdHex, escrowContractAddress as Address);
+    const status = await getRequestStatus(
+      requestIdHex,
+      escrowContractAddress as Address
+    );
 
-    console.log('[getContractStatus] Contract returned status:', status);
+    console.log("[getContractStatus] Contract returned status:", status);
 
     if (status === null) {
       return {
         status: null,
-        statusLabel: 'Not found',
+        statusLabel: "Not found",
         hasStatus: false,
       };
     }
@@ -104,10 +121,10 @@ export async function getContractStatus(
       hasStatus: true,
     };
   } catch (error) {
-    console.error('[getContractStatus] Error fetching contract status:', error);
+    console.error("[getContractStatus] Error fetching contract status:", error);
     return {
       status: null,
-      statusLabel: 'Error fetching',
+      statusLabel: "Error fetching",
       hasStatus: false,
     };
   }
@@ -127,14 +144,19 @@ export async function canOpenDispute(
   }
 
   try {
-    const requestIdHex = requestId.startsWith('0x') ? (requestId as Hex) : (`0x${requestId}` as Hex);
+    const requestIdHex = requestId.startsWith("0x")
+      ? (requestId as Hex)
+      : (`0x${requestId}` as Hex);
 
-    console.log('[canOpenDispute] Fetching request from contract:', {
+    console.log("[canOpenDispute] Fetching request from contract:", {
       requestId: requestIdHex,
       escrowAddress: escrowContractAddress,
     });
 
-    const request = await getCachedRequestDetails(requestIdHex, escrowContractAddress as Address);
+    const request = await getCachedRequestDetails(
+      requestIdHex,
+      escrowContractAddress as Address
+    );
 
     if (!request) {
       return false;
@@ -142,9 +164,15 @@ export async function canOpenDispute(
 
     const currentTime = BigInt(Math.floor(Date.now() / 1000));
 
-    return request.status === RequestStatus.Escrowed && currentTime < request.nextDeadline;
+    return (
+      request.status === RequestStatus.Escrowed &&
+      currentTime < request.nextDeadline
+    );
   } catch (error) {
-    console.error('[canOpenDispute] Error checking if dispute can be opened:', error);
+    console.error(
+      "[canOpenDispute] Error checking if dispute can be opened:",
+      error
+    );
     return false;
   }
 }
@@ -164,14 +192,19 @@ export async function canEscalateDispute(
   }
 
   try {
-    const requestIdHex = requestId.startsWith('0x') ? (requestId as Hex) : (`0x${requestId}` as Hex);
+    const requestIdHex = requestId.startsWith("0x")
+      ? (requestId as Hex)
+      : (`0x${requestId}` as Hex);
 
-    console.log('[canEscalateDispute] Fetching request from contract:', {
+    console.log("[canEscalateDispute] Fetching request from contract:", {
       requestId: requestIdHex,
       escrowAddress: escrowContractAddress,
     });
 
-    const request = await getCachedRequestDetails(requestIdHex, escrowContractAddress as Address);
+    const request = await getCachedRequestDetails(
+      requestIdHex,
+      escrowContractAddress as Address
+    );
 
     if (!request) {
       return false;
@@ -191,7 +224,10 @@ export async function canEscalateDispute(
 
     return false;
   } catch (error) {
-    console.error('[canEscalateDispute] Error checking if dispute can be escalated:', error);
+    console.error(
+      "[canEscalateDispute] Error checking if dispute can be escalated:",
+      error
+    );
     return false;
   }
 }
@@ -209,14 +245,19 @@ export async function canCancelDispute(
   }
 
   try {
-    const requestIdHex = requestId.startsWith('0x') ? (requestId as Hex) : (`0x${requestId}` as Hex);
+    const requestIdHex = requestId.startsWith("0x")
+      ? (requestId as Hex)
+      : (`0x${requestId}` as Hex);
 
-    console.log('[canCancelDispute] Fetching request from contract:', {
+    console.log("[canCancelDispute] Fetching request from contract:", {
       requestId: requestIdHex,
       escrowAddress: escrowContractAddress,
     });
 
-    const request = await getCachedRequestDetails(requestIdHex, escrowContractAddress as Address);
+    const request = await getCachedRequestDetails(
+      requestIdHex,
+      escrowContractAddress as Address
+    );
 
     if (!request) {
       return false;
@@ -228,7 +269,10 @@ export async function canCancelDispute(
       request.status === RequestStatus.DisputeEscalated
     );
   } catch (error) {
-    console.error('[canCancelDispute] Error checking if dispute can be cancelled:', error);
+    console.error(
+      "[canCancelDispute] Error checking if dispute can be cancelled:",
+      error
+    );
     return false;
   }
 }
@@ -249,4 +293,58 @@ export async function batchGetContractStatuses(
   );
 
   return results;
+}
+
+/**
+ * Get the contract status for a request
+ * Returns fallback message if escrow address is not set or status cannot be fetched
+ */
+export async function getContractNextDeadline(
+  requestId: string,
+  escrowContractAddress: string | null
+): Promise<number | null> {
+  // If no escrow contract address, return fallback
+  if (!escrowContractAddress) {
+    return null;
+  }
+
+  try {
+    // Ensure request ID is in hex format
+    const requestIdHex = requestId.startsWith("0x")
+      ? (requestId as Hex)
+      : (`0x${requestId}` as Hex);
+
+    console.log("[getContractStatus] Querying contract:", {
+      requestId: requestIdHex,
+      escrowAddress: escrowContractAddress,
+    });
+
+    // Fetch status from blockchain
+    const nextDeadlineData = await getRequestNextDeadline(
+      requestIdHex,
+      escrowContractAddress as Address
+    );
+
+    console.log(
+      "[getContractStatus] Contract returned status:",
+      nextDeadlineData
+    );
+
+    const [
+      buyer,
+      amount,
+      escrowedAt,
+      nextDeadline,
+      status,
+      apiResponseHash,
+      disputeAgent,
+      buyerRefunded,
+      sellerRejected,
+    ] = nextDeadlineData;
+
+    return nextDeadline;
+  } catch (error) {
+    console.error("[getContractStatus] Error fetching contract status:", error);
+    return null;
+  }
 }

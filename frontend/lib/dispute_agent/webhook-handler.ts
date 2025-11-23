@@ -5,10 +5,13 @@ import { fetchServiceMetadata } from './metadata';
 import { makeDisputeDecision } from './llm';
 import { resolveDisputeOnChain } from './resolver';
 import { WebhookEvent, DisputeContext, RequestStatus } from './types';
+import { ethers } from 'ethers';
+import { DisputeEscrowABI } from '@/lib/contracts/DisputeEscrowABI';
 import dotenv from 'dotenv';
 
-// Load environment variables
 dotenv.config({ path: __dirname + '/../../.env' });
+
+const DISPUTE_ESCALATED_SIGNATURE = ethers.id('DisputeEscalated(bytes32)');
 
 export interface WebhookResult {
   success: boolean;
@@ -25,13 +28,11 @@ export interface WebhookResult {
 /**
  * Main webhook handler logic extracted for reusability
  */
-export async function handleDisputeWebhook(webhookEvent: WebhookEvent): Promise<WebhookResult> {
+export async function handleDisputeWebhook(payload: WebhookEvent): Promise<WebhookResult> {
   console.log('Processing dispute webhook:', new Date().toISOString());
 
   try {
-    // 1. Validate webhook event
-    console.log('Validating webhook event...');
-    const validation = await validateWebhookEvent(webhookEvent);
+    const validation = await validateWebhookEvent(payload);
 
     if (!validation.valid) {
       console.error('Invalid webhook event:', validation.error);
@@ -41,109 +42,113 @@ export async function handleDisputeWebhook(webhookEvent: WebhookEvent): Promise<
       };
     }
 
-    // Only process DisputeEscalated events
-    if (webhookEvent.event !== 'DisputeEscalated') {
-      console.log(`Ignoring event type: ${webhookEvent.event}`);
+    for (const log of payload.event.data.block.logs) {
+      const eventSignature = log.topics[0];
+      
+      if (eventSignature !== DISPUTE_ESCALATED_SIGNATURE) {
+        console.log('Ignoring non-DisputeEscalated event');
+        continue;
+      }
+
+      const contractAddress = log.account.address;
+      
+      const iface = new ethers.Interface(DisputeEscrowABI);
+      const decoded = iface.parseLog({
+        topics: log.topics,
+        data: log.data,
+      });
+
+      if (!decoded) {
+        console.error('Failed to decode event');
+        continue;
+      }
+
+      const requestId = decoded.args[0];
+      console.log(`Processing dispute for request ${requestId} in contract ${contractAddress}`);
+
+      console.log('Fetching request details from blockchain...');
+      const serviceRequest = await fetchRequestDetails(contractAddress, requestId);
+
+      if (serviceRequest.status !== RequestStatus.DisputeEscalated) {
+        console.error(`Request ${requestId} is not in escalated state`);
+        return {
+          success: false,
+          error: 'Request not in escalated state'
+        };
+      }
+
+      console.log('Fetching resource request data from Supabase...');
+      const resourceRequestData = await fetchResourceRequestData(requestId);
+
+      if (!resourceRequestData) {
+        console.error(`No resource request data found for request ID: ${requestId}`);
+        return {
+          success: false,
+          error: 'Resource request data not found'
+        };
+      }
+
+      console.log('Fetching service metadata...');
+      let serviceMetadata = null;
+      try {
+        const metadataURI = await getServiceMetadataURI(contractAddress);
+        if (metadataURI) {
+          serviceMetadata = await fetchServiceMetadata(metadataURI);
+          console.log('Service metadata fetched successfully');
+        } else {
+          console.log('No metadata URI found for service');
+        }
+      } catch (error) {
+        console.warn('Failed to fetch service metadata:', error);
+      }
+
+      const disputeContext: DisputeContext = {
+        requestId,
+        contractAddress,
+        serviceRequest,
+        resourceRequestData,
+        serviceMetadata
+      };
+
+      console.log('Making dispute decision with LLM...');
+      const decision = await makeDisputeDecision(disputeContext);
+
+      console.log(`LLM Decision: Refund=${decision.refund}, Reason="${decision.reason}"`);
+
+      const confidenceThreshold = parseFloat(process.env.RESOLUTION_CONFIDENCE_THRESHOLD || '0.8');
+      if (decision.confidence && decision.confidence < confidenceThreshold) {
+        console.warn(`Confidence ${decision.confidence} below threshold ${confidenceThreshold}`);
+      }
+
+      let transactionHash: string | undefined;
+
+      if (process.env.SKIP_BLOCKCHAIN_CALLS === 'true') {
+        console.log('Skipping blockchain call (TEST_MODE)');
+        transactionHash = '0x' + '0'.repeat(64);
+      } else {
+        console.log('Executing on-chain dispute resolution...');
+        transactionHash = await resolveDisputeOnChain(
+          contractAddress,
+          requestId,
+          decision.refund
+        );
+        console.log(`Dispute resolved on-chain. Transaction hash: ${transactionHash}`);
+      }
+
       return {
         success: true,
-        message: 'Event type not handled'
-      };
-    }
-
-    const { requestId } = webhookEvent.args;
-    const { contractAddress } = webhookEvent;
-
-    console.log(`Processing dispute for request ${requestId} in contract ${contractAddress}`);
-
-    // 2. Fetch request details from blockchain
-    console.log('Fetching request details from blockchain...');
-    const serviceRequest = await fetchRequestDetails(contractAddress, requestId);
-
-    // Verify request is in escalated state
-    if (serviceRequest.status !== RequestStatus.DisputeEscalated) {
-      console.error(`Request ${requestId} is not in escalated state`);
-      return {
-        success: false,
-        error: 'Request not in escalated state'
-      };
-    }
-
-    // 3. Fetch resource request data from Supabase using request ID
-    console.log('Fetching resource request data from Supabase...');
-    const resourceRequestData = await fetchResourceRequestData(requestId);
-
-    if (!resourceRequestData) {
-      console.error(`No resource request data found for request ID: ${requestId}`);
-      return {
-        success: false,
-        error: 'Resource request data not found'
-      };
-    }
-
-    // 4. Fetch service metadata
-    console.log('Fetching service metadata...');
-    let serviceMetadata = null;
-    try {
-      const metadataURI = await getServiceMetadataURI(contractAddress);
-      if (metadataURI) {
-        serviceMetadata = await fetchServiceMetadata(metadataURI);
-        console.log('Service metadata fetched successfully');
-      } else {
-        console.log('No metadata URI found for service');
-      }
-    } catch (error) {
-      console.warn('Failed to fetch service metadata:', error);
-      // Continue without metadata - not a critical error
-    }
-
-    // 5. Prepare dispute context
-    const disputeContext: DisputeContext = {
-      requestId,
-      contractAddress,
-      serviceRequest,
-      resourceRequestData,
-      serviceMetadata
-    };
-
-    // 6. Make LLM decision
-    console.log('Making dispute decision with LLM...');
-    const decision = await makeDisputeDecision(disputeContext);
-
-    console.log(`LLM Decision: Refund=${decision.refund}, Reason="${decision.reason}"`);
-
-    // 7. Check confidence threshold if configured
-    const confidenceThreshold = parseFloat(process.env.RESOLUTION_CONFIDENCE_THRESHOLD || '0.8');
-    if (decision.confidence && decision.confidence < confidenceThreshold) {
-      console.warn(`Confidence ${decision.confidence} below threshold ${confidenceThreshold}`);
-      // In production, you might want to escalate to human review here
-      // For now, we'll proceed but log the low confidence
-    }
-
-    // 8. Execute on-chain resolution (optional - can be disabled for testing)
-    let transactionHash: string | undefined;
-
-    if (process.env.SKIP_BLOCKCHAIN_CALLS === 'true') {
-      console.log('Skipping blockchain call (TEST_MODE)');
-      transactionHash = '0x' + '0'.repeat(64); // Mock transaction hash
-    } else {
-      console.log('Executing on-chain dispute resolution...');
-      transactionHash = await resolveDisputeOnChain(
-        contractAddress,
         requestId,
-        decision.refund
-      );
-      console.log(`Dispute resolved on-chain. Transaction hash: ${transactionHash}`);
+        decision: {
+          refund: decision.refund,
+          reason: decision.reason
+        },
+        transactionHash
+      };
     }
 
-    // Return success response
     return {
       success: true,
-      requestId,
-      decision: {
-        refund: decision.refund,
-        reason: decision.reason
-      },
-      transactionHash
+      message: 'No DisputeEscalated events found in payload'
     };
 
   } catch (error) {

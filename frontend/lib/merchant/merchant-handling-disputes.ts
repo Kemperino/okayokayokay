@@ -31,7 +31,7 @@ export interface WebhookResult {
  * Makes a random 50/50 decision to accept or reject the dispute
  */
 export async function merchantHandlingDisputes(
-  webhookEvent: WebhookEvent
+  payload: WebhookEvent
 ): Promise<WebhookResult> {
   console.log("Processing merchant dispute webhook:", new Date().toISOString());
 
