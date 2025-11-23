@@ -114,7 +114,7 @@ async function testContractInteraction() {
   logSection('Testing Contract Interaction');
 
   try {
-    const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+    const provider = new ethers.JsonRpcProvider(process.env.BASE_RPC_URL);
 
     // Test provider connection
     const network = await provider.getNetwork();

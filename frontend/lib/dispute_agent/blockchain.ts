@@ -18,7 +18,7 @@ export async function fetchRequestDetails(
   requestId: string
 ): Promise<ServiceRequest> {
   try {
-    const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+    const provider = new ethers.JsonRpcProvider(process.env.BASE_RPC_URL);
     const escrowContract = new ethers.Contract(
       contractAddress,
       DISPUTE_ESCROW_ABI,
@@ -53,7 +53,7 @@ export async function fetchRequestDetails(
  */
 export async function getServiceProvider(contractAddress: string): Promise<string> {
   try {
-    const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+    const provider = new ethers.JsonRpcProvider(process.env.BASE_RPC_URL);
     const escrowContract = new ethers.Contract(
       contractAddress,
       DISPUTE_ESCROW_ABI,
@@ -76,7 +76,7 @@ export async function getRequestStatus(
   requestId: string
 ): Promise<number> {
   try {
-    const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+    const provider = new ethers.JsonRpcProvider(process.env.BASE_RPC_URL);
     const escrowContract = new ethers.Contract(
       contractAddress,
       DISPUTE_ESCROW_ABI,
@@ -110,7 +110,7 @@ export function parseAmount(amount: string, decimals: number = 6): bigint {
  */
 export async function getServiceMetadataURI(contractAddress: string): Promise<string> {
   try {
-    const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+    const provider = new ethers.JsonRpcProvider(process.env.BASE_RPC_URL);
     const escrowContract = new ethers.Contract(
       contractAddress,
       DISPUTE_ESCROW_ABI,

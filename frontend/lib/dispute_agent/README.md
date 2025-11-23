@@ -41,7 +41,7 @@ cp .env.example .env
 ```
 # Blockchain
 PRIVATE_KEY=<agent_private_key>
-RPC_URL=<rpc_endpoint>
+BASE_RPC_URL=<rpc_endpoint>
 FACTORY_CONTRACT_ADDRESS=<factory_address>
 CHAIN_ID=84532  # Base Sepolia
 
