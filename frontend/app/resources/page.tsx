@@ -10,6 +10,7 @@ import ResourceRequestHistory from "@/components/ResourceRequestHistory";
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+
 export default async function ResourcesPage() {
   const [resourcesResult, requestsResult] = await Promise.all([
     getActiveResources(),
