@@ -3,7 +3,7 @@ import { MobileHeader, DesktopSidebar } from "@/components/Sidebar";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "okay3 - Dispute Resolution Platform",
+  title: "okay3 - x402 disputes",
   description: "x402 payment dispute resolution with multi-layer arbitration",
   icons: {
     icon: [

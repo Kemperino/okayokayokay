@@ -5,12 +5,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { WalletBadge } from "@/components/WalletBadge";
-import { FileIcon, Table2, Menu, X, Activity } from "lucide-react";
+import { Menu, X, Activity, Scale, HandCoins } from "lucide-react";
 
 const links = [
-  { href: "/requests", label: "My Transactions", icon: Activity },
-  { href: "/resources", label: "Resources", icon: Table2 },
-  { href: "/disputes", label: "My Disputes", icon: FileIcon },
+  { href: "/", label: "My Transactions", icon: Activity },
+  { href: "/resources", label: "Resources", icon: HandCoins },
+  { href: "/disputes", label: "My Disputes", icon: Scale },
 ];
 
 export function MobileHeader() {
@@ -24,7 +24,7 @@ export function MobileHeader() {
           <div className="flex items-center justify-between h-16">
             <Link
               href="/"
-              className="hover:opacity-80 transition-opacity"
+              className="hover:opacity-80 transition-opacity flex items-center gap-3"
             >
               <Image
                 src="/logo.png"
@@ -33,6 +33,7 @@ export function MobileHeader() {
                 height={40}
                 className="rounded"
               />
+              <span className="text-xl font-bold text-primary">okay3</span>
             </Link>
             <div className="flex items-center gap-4">
               <WalletBadge />
@@ -129,7 +130,7 @@ export function DesktopSidebar() {
       <div className="p-6 border-b border-contrast flex-shrink-0">
         <Link
           href="/"
-          className="hover:opacity-80 transition-opacity"
+          className="hover:opacity-80 transition-opacity flex items-center gap-3"
         >
           <Image
             src="/logo.png"
@@ -138,6 +139,7 @@ export function DesktopSidebar() {
             height={48}
             className="rounded"
           />
+          <span className="text-2xl font-bold text-primary">okay3</span>
         </Link>
       </div>
 
