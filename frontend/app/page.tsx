@@ -1,5 +1,4 @@
 import { RealtimeResourceRequests } from "@/components/events/RealtimeResourceRequests";
-import Link from "next/link";
 
 export default function Home() {
   return (
@@ -10,31 +9,6 @@ export default function Home() {
           Dispute resolution platform for x402 payments with multi-layer
           arbitration
         </p>
-
-        {/* Quick Links */}
-        <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link
-            href="/wallet"
-            className="px-4 py-3 bg-highlight text-primary rounded-lg hover:bg-highlight/90 transition text-center"
-          >
-            <div className="font-semibold">Wallet</div>
-            <div className="text-xs opacity-90">Manage funds</div>
-          </Link>
-          <Link
-            href="/resources"
-            className="px-4 py-3 bg-contrast text-primary rounded-lg hover:bg-default transition text-center"
-          >
-            <div className="font-semibold">Resources</div>
-            <div className="text-xs opacity-90">Browse & test</div>
-          </Link>
-          <Link
-            href="/disputes"
-            className="px-4 py-3 bg-warning text-background rounded-lg hover:bg-warning/90 transition text-center"
-          >
-            <div className="font-semibold">My Disputes</div>
-            <div className="text-xs opacity-90">Track status</div>
-          </Link>
-        </div>
 
         {/* Resource Requests Feed */}
         <div>
