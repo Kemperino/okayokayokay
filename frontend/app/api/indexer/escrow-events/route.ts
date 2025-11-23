@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { verifyAlchemySignature } from '@/lib/alchemy/webhook-helpers';
+import { validateAlchemySignature } from '@/lib/alchemy/signature';
 import { ethers } from 'ethers';
 import { DisputeEscrowABI } from '@/lib/contracts/DisputeEscrowABI';
 
@@ -56,11 +56,17 @@ interface AlchemyWebhookPayload {
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Verify Alchemy webhook signature
     const signature = request.headers.get('x-alchemy-signature');
     const body = await request.text();
 
-    if (!verifyAlchemySignature(body, signature!)) {
+    const signingKey = process.env.ALCHEMY_ESCROW_EVENTS_SIGNING_KEY;
+    if (!signingKey) {
+      console.error('ALCHEMY_ESCROW_EVENTS_SIGNING_KEY not configured');
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+
+    if (!validateAlchemySignature(body, signature, signingKey)) {
+      console.error('Invalid Alchemy webhook signature for escrow-events');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
