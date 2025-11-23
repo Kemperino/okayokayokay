@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import DisputesList from './DisputesList';
 import { getSessionId } from '@/lib/session-manager';
 import type { DisputeWithStatus } from '@/lib/actions/get-user-disputes';
+import CopyButton from './CopyButton';
 
 export default function DisputesPageClient() {
   const [disputes, setDisputes] = useState<DisputeWithStatus[]>([]);
@@ -88,12 +89,13 @@ export default function DisputesPageClient() {
     <div>
       {walletAddress && (
         <div className="mb-6 p-4 bg-default border border-contrast rounded-lg">
-          <p className="text-sm text-primary/70">
-            Showing disputes for wallet:{' '}
-            <code className="text-xs bg-contrast px-2 py-1 rounded font-mono text-primary">
-              {walletAddress.slice(0, 10)}...{walletAddress.slice(-8)}
-            </code>
-          </p>
+          <div className="text-sm">
+            <CopyButton 
+              value={walletAddress}
+              label="Showing disputes for wallet:"
+              showFullValue={true}
+            />
+          </div>
         </div>
       )}
       

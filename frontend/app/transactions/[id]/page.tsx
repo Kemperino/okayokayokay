@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import TransactionDetailClient from "@/components/TransactionDetailClient";
 import ContractStatusBadgeClient from "@/components/ContractStatusBadgeClient";
 import { batchGetRequestData } from "@/lib/contracts/multicall-batch";
+import CopyableCode from "@/components/CopyableCode";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -93,44 +94,24 @@ export default async function TransactionDetailPage({ params }: PageProps) {
 
         {/* Request ID */}
         <div className="mb-4 pb-4 border-b border-contrast">
-          <label className="text-sm font-semibold text-primary/80 block mb-1">
-            Request ID
-          </label>
-          <code className="text-xs bg-contrast px-3 py-2 rounded block font-mono break-all text-primary">
-            {request.request_id}
-          </code>
+          <CopyableCode value={request.request_id} label="Request ID" />
         </div>
 
         {/* Grid of Details */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="text-sm font-semibold text-primary/80 block mb-1">
-              User Address
-            </label>
-            <code className="text-xs bg-contrast px-3 py-2 rounded block font-mono break-all text-primary">
-              {request.user_address}
-            </code>
+            <CopyableCode value={request.user_address} label="User Address" />
           </div>
 
           {request.seller_address && (
             <div>
-              <label className="text-sm font-semibold text-primary/80 block mb-1">
-                Seller Address
-              </label>
-              <code className="text-xs bg-contrast px-3 py-2 rounded block font-mono break-all text-primary">
-                {request.seller_address}
-              </code>
+              <CopyableCode value={request.seller_address} label="Seller Address" />
             </div>
           )}
 
           {request.tx_hash && (
             <div className="lg:col-span-2">
-              <label className="text-sm font-semibold text-primary/80 block mb-1">
-                Transaction Hash
-              </label>
-              <code className="text-xs bg-contrast px-3 py-2 rounded block font-mono break-all text-primary">
-                {request.tx_hash}
-              </code>
+              <CopyableCode value={request.tx_hash} label="Transaction Hash" />
             </div>
           )}
 

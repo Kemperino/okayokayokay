@@ -6,6 +6,7 @@ import { Clock } from "lucide-react";
 import ContractStatusBadge from "./ContractStatusBadge";
 import { useEffect, useState } from "react";
 import type { RequestBatchData } from "@/lib/contracts/multicall-batch";
+import CopyButton from "./CopyButton";
 
 interface ResourceRequest {
   request_id: string;
@@ -133,37 +134,41 @@ export default function ResourceRequestCard({
 
         {request.user_address && (
           <div>
-            <span className="font-semibold text-primary/80">User:</span>{" "}
-            <code className="bg-contrast px-1 py-0.5 rounded text-xs text-primary font-mono">
-              {request.user_address}
-            </code>
+            <CopyButton 
+              value={request.user_address}
+              label="User:"
+              showFullValue={true}
+            />
           </div>
         )}
 
         {request.seller_address && (
           <div>
-            <span className="font-semibold text-primary/80">Seller:</span>{" "}
-            <code className="bg-contrast px-1 py-0.5 rounded text-xs text-primary font-mono">
-              {request.seller_address}
-            </code>
+            <CopyButton 
+              value={request.seller_address}
+              label="Seller:"
+              showFullValue={true}
+            />
           </div>
         )}
 
         {request.tx_hash && (
           <div>
-            <span className="font-semibold text-primary/80">Tx:</span>{" "}
-            <code className="bg-contrast px-1 py-0.5 rounded text-primary font-mono break-all">
-              {request.tx_hash}
-            </code>
+            <CopyButton 
+              value={request.tx_hash}
+              label="Tx:"
+              showFullValue={true}
+            />
           </div>
         )}
 
         {request.escrow_contract_address && (
           <div>
-            <span className="font-semibold">Escrow:</span>{" "}
-            <code className="bg-contrast px-1 py-0.5 rounded text-xs text-primary font-mono">
-              {request.escrow_contract_address}
-            </code>
+            <CopyButton 
+              value={request.escrow_contract_address}
+              label="Escrow:"
+              showFullValue={true}
+            />
           </div>
         )}
 

@@ -1,6 +1,7 @@
 'use client';
 
 import ContractStatusBadgeClient from './ContractStatusBadgeClient';
+import CopyButton from './CopyButton';
 
 interface ResourceRequest {
   request_id: string;
@@ -96,25 +97,27 @@ export default function MerchantResourceRequests({
 
               {req.user_address && (
                 <div>
-                  <span className="font-semibold">Buyer:</span>{' '}
-                  <code className="bg-gray-100 px-1 py-0.5 rounded">
-                    {formatAddress(req.user_address)}
-                  </code>
+                  <CopyButton 
+                    value={req.user_address}
+                    label="Buyer:"
+                    showFullValue={true}
+                  />
                 </div>
               )}
 
               {req.tx_hash && (
                 <div>
-                  <span className="font-semibold">Tx:</span>{' '}
                   <a
                     href={`https://basescan.org/tx/${req.tx_hash}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
+                    className="text-blue-600 hover:underline inline-flex items-center gap-2"
                   >
-                    <code className="bg-gray-100 px-1 py-0.5 rounded">
-                      {req.tx_hash.slice(0, 10)}...{req.tx_hash.slice(-8)}
-                    </code>
+                    <CopyButton 
+                      value={req.tx_hash}
+                      label="Tx:"
+                      showFullValue={true}
+                    />
                   </a>
                 </div>
               )}

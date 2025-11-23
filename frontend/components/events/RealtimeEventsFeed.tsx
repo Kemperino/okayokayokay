@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { subscribeToNewEvents } from '@/lib/queries/alchemy-events';
 import { supabase } from '@/lib/supabase/client';
+import CopyButton from '../CopyButton';
 
 type AlchemyEvent = {
   id: number;
@@ -69,18 +70,35 @@ export function RealtimeEventsFeed() {
           className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow"
         >
           <div className="flex justify-between items-start mb-2">
-            <div className="font-mono text-xs">
-              {event.from_address?.slice(0, 10)}...
-              <span className="mx-1 text-gray-400">→</span>
-              {event.to_address?.slice(0, 10)}...
-            </div>
             <div className="text-sm font-semibold text-green-600">
               {event.amount}
             </div>
           </div>
+          {event.from_address && (
+            <div className="mb-2">
+              <CopyButton 
+                value={event.from_address}
+                label="From:"
+                showFullValue={true}
+              />
+            </div>
+          )}
+          {event.to_address && (
+            <div className="mb-2">
+              <CopyButton 
+                value={event.to_address}
+                label="To:"
+                showFullValue={true}
+              />
+            </div>
+          )}
           {event.nonce && (
-            <div className="text-xs text-gray-500 mb-1">
-              Nonce: {event.nonce.slice(0, 16)}...
+            <div className="mb-2">
+              <CopyButton 
+                value={event.nonce}
+                label="Nonce:"
+                showFullValue={true}
+              />
             </div>
           )}
           <div className="text-xs text-gray-400">

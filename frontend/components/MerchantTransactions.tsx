@@ -8,6 +8,7 @@ import {
 } from '@/lib/contracts/DisputeEscrowContract';
 import { RequestStatus, RequestStatusLabels } from '@/lib/contracts/DisputeEscrowABI';
 import type { DisputeStatus } from '@/lib/queries/transactions.server';
+import CopyButton from './CopyButton';
 
 interface Transaction {
   request_id: string;
@@ -132,8 +133,12 @@ export default function MerchantTransactions({
           >
             <div className="flex justify-between items-start mb-3">
               <div className="flex-1">
-                <div className="text-sm font-semibold text-gray-900 mb-1">
-                  Request ID: {tx.request_id.slice(0, 16)}...
+                <div className="mb-2">
+                  <CopyButton 
+                    value={tx.request_id}
+                    label="Request ID:"
+                    showFullValue={true}
+                  />
                 </div>
                 <div className="text-lg font-bold text-gray-900">
                   ${formatAmount(tx.amount)} USDC
@@ -157,10 +162,11 @@ export default function MerchantTransactions({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
               <div>
-                <span className="font-semibold">Buyer:</span>{' '}
-                <code className="bg-gray-100 px-1 py-0.5 rounded">
-                  {formatAddress(tx.buyer_id)}
-                </code>
+                <CopyButton 
+                  value={tx.buyer_id}
+                  label="Buyer:"
+                  showFullValue={true}
+                />
               </div>
 
               {tx.payment_settled_at && (
