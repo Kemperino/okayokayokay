@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Clock } from 'lucide-react';
-import DisputeActionButtons from './DisputeActionButtons';
-import ContractStatusBadge from './ContractStatusBadge';
-import { getContractNextDeadline } from '@/lib/actions/get-contract-status';
+import { useState, useEffect } from "react";
+import { Clock } from "lucide-react";
+import DisputeActionButtons from "./DisputeActionButtons";
+import ContractStatusBadge from "./ContractStatusBadge";
+import { getContractNextDeadline } from "@/lib/actions/get-contract-status";
 
 interface TransactionDetailClientProps {
   requestId: string;
@@ -48,7 +48,9 @@ export default function TransactionDetailClient({
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
-  const [nextDeadline, setNextDeadline] = useState<bigint | number | null>(null);
+  const [nextDeadline, setNextDeadline] = useState<bigint | number | null>(
+    null
+  );
   const [countdown, setCountdown] = useState<string>("");
 
   useEffect(() => {
@@ -65,10 +67,18 @@ export default function TransactionDetailClient({
         }
 
         const [statusRes, openRes, escalateRes, cancelRes] = await Promise.all([
-          fetch(`/api/contract-status?requestId=${requestId}&escrowAddress=${escrowContractAddress}`),
-          fetch(`/api/contract-status/can-open?requestId=${requestId}&escrowAddress=${escrowContractAddress}`),
-          fetch(`/api/contract-status/can-escalate?requestId=${requestId}&escrowAddress=${escrowContractAddress}`),
-          fetch(`/api/contract-status/can-cancel?requestId=${requestId}&escrowAddress=${escrowContractAddress}`),
+          fetch(
+            `/api/contract-status?requestId=${requestId}&escrowAddress=${escrowContractAddress}`
+          ),
+          fetch(
+            `/api/contract-status/can-open?requestId=${requestId}&escrowAddress=${escrowContractAddress}`
+          ),
+          fetch(
+            `/api/contract-status/can-escalate?requestId=${requestId}&escrowAddress=${escrowContractAddress}`
+          ),
+          fetch(
+            `/api/contract-status/can-cancel?requestId=${requestId}&escrowAddress=${escrowContractAddress}`
+          ),
         ]);
 
         const [status, canOpen, canEscalate, canCancel] = await Promise.all([
@@ -87,12 +97,12 @@ export default function TransactionDetailClient({
           canCancel: canCancel.can,
         };
 
-        console.log('[TransactionDetail] Fetched status:', newStatusData);
+        console.log("[TransactionDetail] Fetched status:", newStatusData);
 
         // Only update status data if not in pending state, or if status actually changed
         setStatusData(newStatusData);
       } catch (error) {
-        console.error('Error fetching contract status:', error);
+        console.error("Error fetching contract status:", error);
       } finally {
         setLoading(false);
       }
@@ -105,8 +115,11 @@ export default function TransactionDetailClient({
   useEffect(() => {
     const fetchNextDeadline = async () => {
       if (!escrowContractAddress) return;
-      
-      const deadline = await getContractNextDeadline(requestId, escrowContractAddress);
+
+      const deadline = await getContractNextDeadline(
+        requestId,
+        escrowContractAddress
+      );
       if (deadline !== null) {
         setNextDeadline(deadline);
       }
@@ -139,14 +152,16 @@ export default function TransactionDetailClient({
 
   const handleSuccess = (action: string) => {
     setPendingAction(action);
-    
+
     // Transaction is already confirmed when this is called
     // Immediately refetch status
     setRefreshKey((prev) => prev + 1);
-    
+
     // Do one more refetch after 2 seconds in case the indexer/webhook needs time to process
     setTimeout(() => {
-      console.log('[TransactionDetail] Final status refetch after indexer delay');
+      console.log(
+        "[TransactionDetail] Final status refetch after indexer delay"
+      );
       setRefreshKey((prev) => prev + 1);
       setPendingAction(null);
     }, 2000);
@@ -166,9 +181,24 @@ export default function TransactionDetailClient({
     return (
       <div className="bg-default border border-contrast rounded-lg p-6">
         <div className="flex items-center gap-3">
-          <svg className="animate-spin h-5 w-5 text-primary" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          <svg
+            className="animate-spin h-5 w-5 text-primary"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+              fill="none"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
           </svg>
           <p className="text-sm text-primary">Loading contract status...</p>
         </div>
@@ -180,17 +210,36 @@ export default function TransactionDetailClient({
     <div className="space-y-6">
       {statusData && statusData.hasStatus && (
         <div className="bg-default border border-contrast rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-primary mb-3">Contract Status</h3>
+          <h3 className="text-lg font-semibold text-primary mb-3">
+            Contract Status
+          </h3>
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <span className="text-sm text-primary/70">On-Chain Status:</span>
               {pendingAction ? (
                 <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-highlight/20 border border-highlight">
-                  <svg className="animate-spin h-4 w-4 text-highlight" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  <svg
+                    className="animate-spin h-4 w-4 text-highlight"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
                   </svg>
-                  <span className="text-sm font-medium text-highlight">Updating...</span>
+                  <span className="text-sm font-medium text-highlight">
+                    Updating...
+                  </span>
                 </div>
               ) : (
                 <ContractStatusBadge
@@ -203,7 +252,9 @@ export default function TransactionDetailClient({
             {countdown && (
               <div className="flex items-center gap-2 text-sm">
                 <Clock size={16} className="text-primary/80" />
-                <span className="font-semibold text-primary/80">Next Deadline:</span>
+                <span className="font-semibold text-primary/80">
+                  Next Deadline:
+                </span>
                 <span className="text-primary font-mono">{countdown}</span>
               </div>
             )}
@@ -215,29 +266,28 @@ export default function TransactionDetailClient({
         requestId={requestId}
         escrowAddress={escrowContractAddress}
         canOpen={
-          pendingAction === 'open' || pendingAction === 'escalate' 
-            ? false 
-            : pendingAction === 'cancel' 
-              ? false // After cancel, don't immediately show open (wait for confirmation)
-              : (statusData?.canOpen ?? false)
+          pendingAction === "open" || pendingAction === "escalate"
+            ? false
+            : pendingAction === "cancel"
+            ? false // After cancel, don't immediately show open (wait for confirmation)
+            : statusData?.canOpen ?? false
         }
         canEscalate={
-          pendingAction === 'escalate' 
-            ? false 
-            : pendingAction === 'open'
-              ? false // After opening dispute, escalate isn't immediately available (seller must respond first)
-              : (statusData?.canEscalate ?? false)
+          pendingAction === "escalate"
+            ? false
+            : pendingAction === "open"
+            ? false // After opening dispute, escalate isn't immediately available (seller must respond first)
+            : statusData?.canEscalate ?? false
         }
         canCancel={
-          pendingAction === 'cancel' 
-            ? false 
-            : pendingAction === 'open' || pendingAction === 'escalate'
-              ? true // Optimistically show cancel after opening or escalating dispute
-              : (statusData?.canCancel ?? false)
+          pendingAction === "cancel"
+            ? false
+            : pendingAction === "open" || pendingAction === "escalate"
+            ? true // Optimistically show cancel after opening or escalating dispute
+            : statusData?.canCancel ?? false
         }
         onSuccess={handleSuccess}
       />
     </div>
   );
 }
-
