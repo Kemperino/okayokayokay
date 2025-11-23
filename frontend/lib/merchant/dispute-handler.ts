@@ -1,13 +1,15 @@
 import { ethers } from "ethers";
-import { validateAgentRole } from "../dispute_agent/validator";
 
 // DisputeEscrow contract ABI (only the function we need)
 const DISPUTE_ESCROW_ABI = [
-  "function resolveDispute(bytes32 requestId, bool acceptRefund) external",
+  "function respondToDispute(bytes32 requestId, bool acceptRefund) external",
 ];
 
 /**
- * Resolves a dispute on-chain by calling the DisputeEscrow contract
+ * Responds to a dispute on-chain as the merchant/service provider
+ * @param contractAddress - The dispute escrow contract address
+ * @param requestId - The request ID for the dispute
+ * @param acceptRefund - Whether to accept the refund request (true) or reject it (false)
  */
 export async function handleDispute(
   contractAddress: string,
@@ -15,18 +17,12 @@ export async function handleDispute(
   acceptRefund: boolean
 ): Promise<string> {
   try {
-    // Validate that the merchant owns this escrow contract
-    const validation = await validateAgentRole("merchant", contractAddress);
-    if (!validation.valid) {
-      throw new Error(validation.error || "Merchant validation failed");
-    }
-
     // Set up provider and wallet
-    const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
-    const wallet = new ethers.Wallet(process.env.AGENT_PRIVATE_KEY!, provider);
+    const provider = new ethers.JsonRpcProvider(process.env.BASE_RPC_URL);
+    const wallet = new ethers.Wallet(process.env.WEATHER_SERVICE_PRIVATE_KEY!, provider);
 
-    // Get the agent's address for logging
-    console.log(`Agent address: ${wallet.address}`);
+    // Get the merchant's address for logging
+    console.log(`Merchant address: ${wallet.address}`);
 
     // Create contract instance with signer
     const escrowContract = new ethers.Contract(
@@ -35,10 +31,33 @@ export async function handleDispute(
       wallet
     );
 
+    // First, simulate the transaction to get better error messages
+    try {
+      console.log(`Simulating respondToDispute(${requestId}, ${acceptRefund})...`);
+      await escrowContract.respondToDispute.staticCall(requestId, acceptRefund);
+      console.log("Simulation successful");
+    } catch (simError: any) {
+      console.error("Simulation failed:", simError);
+
+      // Try to extract the revert reason
+      let revertReason = "Unknown";
+      if (simError.reason) {
+        revertReason = simError.reason;
+      } else if (simError.errorName) {
+        revertReason = simError.errorName;
+      } else if (simError.message) {
+        // Try to extract custom error from message
+        const match = simError.message.match(/reverted with reason string '(.+)'/);
+        if (match) revertReason = match[1];
+      }
+
+      throw new Error(`Transaction would revert: ${revertReason}`);
+    }
+
     // Estimate gas for the transaction
     const gasEstimate = await escrowContract.respondToDispute.estimateGas(
       requestId,
-      0 // false
+      acceptRefund
     );
 
     console.log(`Estimated gas: ${gasEstimate.toString()}`);
@@ -73,7 +92,7 @@ export async function handleDispute(
 
     return tx.hash;
   } catch (error) {
-    console.error("Error resolving dispute on-chain:", error);
+    console.error("Error responding to dispute on-chain:", error);
 
     // Check if it's a revert error and extract the reason
     if (error instanceof Error && "reason" in error) {
@@ -81,7 +100,7 @@ export async function handleDispute(
     }
 
     throw new Error(
-      `Failed to resolve dispute on-chain: ${
+      `Failed to respond to dispute on-chain: ${
         error instanceof Error ? error.message : "Unknown error"
       }`
     );
